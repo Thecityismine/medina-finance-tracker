@@ -35,6 +35,8 @@ export function sumBills(bills) {
   return bills.reduce((acc, b) => acc + (Number(b.amount ?? b.defaultAmount ?? b.default_amount) || 0), 0)
 }
 
+const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000
+
 // Calculate all paychecks within a date range using bi-weekly schedule
 export function getPaychecksInRange(nextPayDate, amount, startDate, endDate) {
   if (!nextPayDate) return []
@@ -43,12 +45,14 @@ export function getPaychecksInRange(nextPayDate, amount, startDate, endDate) {
   const end = startOfDay(new Date(endDate))
   const checks = []
 
-  // Walk backwards to find the first check on or before startDate
-  while (isAfter(d, end)) d = addWeeks(d, -2)
-  while (isBefore(addWeeks(d, -2), start) || isEqual(addWeeks(d, -2), start)) d = addWeeks(d, -2)
-
-  // Walk forward collecting checks in range
+  // O(1) jump to near startDate instead of iterating one step at a time
+  const diffMs = start.getTime() - d.getTime()
+  const periods = Math.floor(diffMs / TWO_WEEKS_MS)
+  if (periods !== 0) d = addWeeks(d, periods * 2)
+  // At most 1 correction step in either direction
+  while (isAfter(d, start)) d = addWeeks(d, -2)
   while (isBefore(d, start)) d = addWeeks(d, 2)
+
   while (isBefore(d, end) || isEqual(d, end)) {
     checks.push({ date: new Date(d), amount })
     d = addWeeks(d, 2)
@@ -130,11 +134,16 @@ export function payoffOrder(cards, method = 'avalanche') {
 
 // Next paycheck across all sources
 export function nextPaycheck(incomeSources) {
-  const today = startOfDay(new Date())
+  const todayDate = startOfDay(new Date())
   let nearest = null
   for (const src of incomeSources) {
     let d = startOfDay(new Date(src.nextPayDate ?? src.next_pay_date))
-    while (isBefore(d, today)) d = addWeeks(d, 2)
+    // O(1) jump forward to near today instead of iterating ~70 steps
+    if (isBefore(d, todayDate)) {
+      const diffMs = todayDate.getTime() - d.getTime()
+      d = addWeeks(d, Math.floor(diffMs / TWO_WEEKS_MS) * 2)
+    }
+    while (isBefore(d, todayDate)) d = addWeeks(d, 2)
     if (!nearest || isBefore(d, nearest.date)) {
       nearest = { date: d, amount: Number(src.amount), person: src.person }
     }

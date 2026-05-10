@@ -165,7 +165,15 @@ export default function Debt() {
       {/* Credit Cards */}
       <SectionTitle>Credit Cards</SectionTitle>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-        {creditCards.map((card) => <CardItem key={card.id} card={card} onEdit={openEditCard} onDelete={deleteCard} />)}
+        {[...creditCards]
+          .sort((a, b) => {
+            const ab = Number(a.balance || 0), bb = Number(b.balance || 0)
+            if (ab === 0 && bb === 0) return 0
+            if (ab === 0) return 1
+            if (bb === 0) return -1
+            return bb - ab
+          })
+          .map((card) => <CardItem key={card.id} card={card} onEdit={openEditCard} onDelete={deleteCard} />)}
         {creditCards.length === 0 && <EmptyState text="No credit cards" />}
       </div>
 
@@ -231,7 +239,7 @@ function CardItem({ card, onEdit, onDelete }) {
             {isHigh && <Badge variant="overdue" label="High Util" size="sm" />}
           </div>
           <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-            <span>Balance: <strong style={{ color: 'var(--red)' }}>{fmt(card.balance)}</strong></span>
+            <span>Balance: <strong style={{ color: Number(card.balance) === 0 ? 'var(--green)' : 'var(--red)' }}>{fmt(card.balance)}</strong></span>
             {limit > 0 && <span>Limit: {fmt(limit)}</span>}
             <span>Min: {fmt(card.minPayment ?? card.min_payment)}</span>
             <span>APR: {card.apr}%</span>

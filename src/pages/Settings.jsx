@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useFinance } from '../context/FinanceContext'
 import { fmt } from '../utils/calculations'
 import { seedFirestore, isFirestoreEmpty } from '../utils/seedData'
-import { Edit2, Save, X, Download, Database, Check } from 'lucide-react'
-import { collection, getDocs } from 'firebase/firestore'
+import { Edit2, Save, X, Download, Upload, Database, Check } from 'lucide-react'
+import { collection, getDocs, doc, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 
 export default function Settings() {
@@ -16,6 +16,8 @@ export default function Settings() {
   const [seedStatus, setSeedStatus] = useState('')
   const [seeding, setSeeding] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importStatus, setImportStatus] = useState('')
 
   const openEditIncome = (src) => {
     setEditIncome(src.id)
@@ -81,6 +83,67 @@ export default function Settings() {
       alert(`Export failed: ${e.message}`)
     }
     setExporting(false)
+  }
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    const confirmed = confirm(
+      'This will DELETE all existing data and replace it with the contents of the file. Continue?'
+    )
+    if (!confirmed) return
+
+    setImporting(true)
+    setImportStatus('Reading file...')
+    try {
+      const parsed = JSON.parse(await file.text())
+
+      // Support both export formats:
+      // New app:  { bills: [], credit_cards: [], income_sources: [], ... }
+      // Old app:  { version, data: { bills: [], cards: [], income: [], ... } }
+      const src = parsed.data ?? parsed
+
+      // Map old key names → Firestore collection names
+      const collections = {
+        bills:          src.bills,
+        credit_cards:   src.credit_cards ?? src.cards,
+        loans:          src.loans,
+        subscriptions:  src.subscriptions,
+        income_sources: src.income_sources ?? src.income,
+        monthly_checks: src.monthly_checks,
+      }
+
+      let totalWritten = 0
+
+      for (const [col, incoming] of Object.entries(collections)) {
+        if (!Array.isArray(incoming) || incoming.length === 0) continue
+
+        setImportStatus(`Clearing ${col}...`)
+        const existing = await getDocs(collection(db, col))
+        for (let i = 0; i < existing.docs.length; i += 450) {
+          const batch = writeBatch(db)
+          existing.docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref))
+          await batch.commit()
+        }
+
+        setImportStatus(`Writing ${col} (${incoming.length} records)...`)
+        for (let i = 0; i < incoming.length; i += 450) {
+          const batch = writeBatch(db)
+          incoming.slice(i, i + 450).forEach(({ id, ...fields }) => {
+            batch.set(doc(db, col, id), fields)
+          })
+          await batch.commit()
+          totalWritten += incoming.slice(i, i + 450).length
+        }
+      }
+
+      setImportStatus(`✓ Import complete — ${totalWritten} records written`)
+    } catch (err) {
+      setImportStatus(`Error: ${err.message}`)
+    }
+    setImporting(false)
   }
 
   const monthlyTotal = incomeSources.reduce((s, src) => s + Number(src.amount) * 2, 0)
@@ -241,6 +304,40 @@ export default function Settings() {
               <button className="btn btn-ghost" onClick={handleExport} disabled={exporting} style={{ opacity: exporting ? 0.6 : 1, flexShrink: 0 }}>
                 <Download size={13} /> {exporting ? 'Exporting...' : 'Export JSON'}
               </button>
+            </div>
+          </div>
+
+          {/* Import */}
+          <div className="card" style={{ borderColor: importStatus.startsWith('✓') ? 'var(--green-border)' : importStatus.startsWith('Error') ? 'var(--red)' : 'var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+                  <Upload size={14} style={{ display: 'inline', marginRight: 6 }} />
+                  Import Data
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  Replace all Firestore data with a previously exported JSON file.
+                  This will overwrite everything — export a backup first.
+                </div>
+                {importStatus && (
+                  <div style={{ marginTop: 8, fontSize: 12, color: importStatus.startsWith('✓') ? 'var(--green)' : importStatus.startsWith('Error') ? 'var(--red)' : 'var(--amber)' }}>
+                    {importStatus}
+                  </div>
+                )}
+              </div>
+              <label
+                className="btn btn-ghost"
+                style={{ opacity: importing ? 0.6 : 1, flexShrink: 0, cursor: importing ? 'default' : 'pointer' }}
+              >
+                <Upload size={13} /> {importing ? 'Importing...' : 'Import JSON'}
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  style={{ display: 'none' }}
+                  disabled={importing}
+                  onChange={handleImport}
+                />
+              </label>
             </div>
           </div>
         </div>
