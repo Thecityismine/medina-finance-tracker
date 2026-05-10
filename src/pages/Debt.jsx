@@ -27,8 +27,8 @@ export default function Debt() {
     const ccDebt = creditCards.reduce((s, c) => s + Number(c.balance || 0), 0)
     const loanDebt = loans.reduce((s, l) => s + Number(l.balance || 0), 0)
     const totalDebt = ccDebt + loanDebt
-    const jorgeDebt = creditCards.filter((c) => c.ownedBy === 'Jorge').reduce((s, c) => s + Number(c.balance || 0), 0)
-    const anseliDebt = creditCards.filter((c) => c.ownedBy === 'Anseli').reduce((s, c) => s + Number(c.balance || 0), 0)
+    const jorgeDebt = creditCards.filter((c) => (c.ownedBy ?? c.owned_by) === 'Jorge').reduce((s, c) => s + Number(c.balance || 0), 0)
+    const anseliDebt = creditCards.filter((c) => (c.ownedBy ?? c.owned_by) === 'Anseli').reduce((s, c) => s + Number(c.balance || 0), 0)
     const utilPct = creditUtilization(creditCards)
     const highestAPR = [...creditCards].sort((a, b) => Number(b.apr) - Number(a.apr))[0]
     const highestBalance = [...creditCards].sort((a, b) => Number(b.balance) - Number(a.balance))[0]
@@ -46,8 +46,8 @@ export default function Debt() {
       creditLimit: c.creditLimit ?? c.credit_limit ?? '',
       minPayment: c.minPayment ?? c.min_payment ?? '',
       apr: c.apr ?? '',
-      dueDate: c.dueDate ?? '',
-      ownedBy: c.ownedBy ?? 'Jorge',
+      dueDate: c.dueDate ?? c.due_date ?? '',
+      ownedBy: c.ownedBy ?? c.owned_by ?? 'Jorge',
     })
   }
 
@@ -264,7 +264,7 @@ function CardItem({ card, onEdit, onDelete }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{card.name}</span>
-            <Badge variant={card.ownedBy?.toLowerCase()} label={card.ownedBy} size="sm" />
+            <Badge variant={(card.ownedBy ?? card.owned_by)?.toLowerCase()} label={card.ownedBy ?? card.owned_by} size="sm" />
             {isHigh && <Badge variant="overdue" label="High Util" size="sm" />}
           </div>
           <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
@@ -272,7 +272,7 @@ function CardItem({ card, onEdit, onDelete }) {
             {limit > 0 && <span>Limit: {fmt(limit)}</span>}
             <span>Min: {fmt(card.minPayment ?? card.min_payment)}</span>
             <span>APR: {card.apr}%</span>
-            <span>Due: {card.dueDate}th</span>
+            <span>Due: {card.dueDate ?? card.due_date ?? '—'}</span>
           </div>
           {limit > 0 && (
             <div style={{ marginTop: 10 }}>
