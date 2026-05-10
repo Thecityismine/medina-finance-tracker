@@ -234,11 +234,11 @@ function CardItem({ card, onEdit, onDelete }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{card.name}</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{card.name}</span>
             <Badge variant={card.ownedBy?.toLowerCase()} label={card.ownedBy} size="sm" />
             {isHigh && <Badge variant="overdue" label="High Util" size="sm" />}
           </div>
-          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
             <span>Balance: <strong style={{ color: Number(card.balance) === 0 ? 'var(--green)' : 'var(--red)' }}>{fmt(card.balance)}</strong></span>
             {limit > 0 && <span>Limit: {fmt(limit)}</span>}
             <span>Min: {fmt(card.minPayment ?? card.min_payment)}</span>
@@ -247,7 +247,7 @@ function CardItem({ card, onEdit, onDelete }) {
           </div>
           {limit > 0 && (
             <div style={{ marginTop: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-dim)', marginBottom: 4 }}>
                 <span>Utilization</span>
                 <span style={{ color: isHigh ? 'var(--red)' : isMed ? 'var(--amber)' : 'var(--green)' }}>{fmtPct(util)}</span>
               </div>
@@ -274,8 +274,8 @@ function LoanItem({ loan, onEdit, onDelete }) {
     <div className="card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{loan.name}</div>
-          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{loan.name}</div>
+          <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
             <span>Balance: <strong style={{ color: 'var(--amber)' }}>{fmt(loan.balance)}</strong></span>
             <span>Payment: {fmt(loan.monthlyPayment ?? loan.monthly_payment)}/mo</span>
             <span>APR: {loan.apr}%</span>
