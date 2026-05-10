@@ -67,7 +67,7 @@ export default function Dashboard() {
     if (leftover < 500) alerts.push({ type: 'warning', text: `Only ${fmt(leftover)} left after all bills this month` })
 
     const dueSoon = allBills.filter((b) => {
-      const d = daysUntilDue(b.dueDate)
+      const d = daysUntilDue(b.dueDate ?? b.due_date)
       return d >= 0 && d <= 7 && !checks[b.id]
     })
     if (dueSoon.length > 0)
@@ -276,7 +276,7 @@ function MiniStat({ label, value, color = 'var(--text)' }) {
 
 function UpcomingBills({ bills, checks }) {
   const upcoming = bills
-    .map((b) => ({ ...b, days: daysUntilDue(b.dueDate) }))
+    .map((b) => ({ ...b, days: daysUntilDue(b.dueDate ?? b.due_date) }))
     .filter((b) => b.days >= 0 && b.days <= 14 && !checks[b.id])
     .sort((a, b) => a.days - b.days)
     .slice(0, 8)

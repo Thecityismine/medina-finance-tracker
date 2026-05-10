@@ -14,7 +14,7 @@ const CATEGORIES = ['Rent', 'Credit Card', 'Utility', 'Personal', 'Loan', 'Inves
 const OWNERS = ['Jorge', 'Anseli']
 
 export default function Bills() {
-  const { bills, addBill, updateBill, deleteBill, monthlyChecks } = useFinance()
+  const { bills, addBill, updateBill, deleteBill, monthlyChecks, toggleBillPaid } = useFinance()
   const { year, month } = today()
   const checksKey = `${year}-${month}`
   const checks = monthlyChecks[checksKey] ?? {}
@@ -41,8 +41,8 @@ export default function Bills() {
     switch (filter) {
       case 'Paid':     list = list.filter((b) => checks[b.id]); break
       case 'Unpaid':   list = list.filter((b) => !checks[b.id]); break
-      case 'Due Soon': list = list.filter((b) => { const d = daysUntilDue(b.dueDate); return d >= 0 && d <= 7 && !checks[b.id] }); break
-      case 'Overdue':  list = list.filter((b) => billStatus(b.dueDate, checks[b.id]) === 'overdue'); break
+      case 'Due Soon': list = list.filter((b) => { const d = daysUntilDue(b.dueDate ?? b.due_date); return d >= 0 && d <= 7 && !checks[b.id] }); break
+      case 'Overdue':  list = list.filter((b) => billStatus(b.dueDate ?? b.due_date, checks[b.id]) === 'overdue'); break
       case 'Autopay':  list = list.filter((b) => b.autopay); break
       case 'Manual':   list = list.filter((b) => !b.autopay); break
       case 'Credit Cards': list = list.filter((b) => b.category === 'Credit Card'); break
@@ -67,7 +67,7 @@ export default function Bills() {
   const summary = useMemo(() => {
     const paid = activeBills.filter((b) => checks[b.id]).length
     const total = activeBills.length
-    const dueSoon = activeBills.filter((b) => { const d = daysUntilDue(b.dueDate); return d >= 0 && d <= 7 && !checks[b.id] }).length
+    const dueSoon = activeBills.filter((b) => { const d = daysUntilDue(b.dueDate ?? b.due_date); return d >= 0 && d <= 7 && !checks[b.id] }).length
     const autopay = activeBills.filter((b) => b.autopay).length
     const totalAmt = activeBills.reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? 0), 0)
     const paidAmt = activeBills.filter((b) => checks[b.id]).reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? 0), 0)
@@ -101,8 +101,8 @@ export default function Bills() {
   const handleSave = async () => {
     const data = {
       name: form.name,
-      amount: Number(form.amount),
-      dueDate: Number(form.dueDate),
+      amount: Number(form.amount) || 0,
+      dueDate: Number(form.dueDate) || 1,
       category: form.category,
       paidBy: form.paidBy,
       accountName: form.accountName,
@@ -110,12 +110,16 @@ export default function Bills() {
       varies: form.varies,
       recurring: true,
     }
-    if (editBill) {
-      await updateBill(editBill.id, data)
-      setEditBill(null)
-    } else {
-      await addBill(data)
-      setShowAdd(false)
+    try {
+      if (editBill) {
+        await updateBill(editBill.id, data)
+        setEditBill(null)
+      } else {
+        await addBill(data)
+        setShowAdd(false)
+      }
+    } catch (e) {
+      alert(`Save failed: ${e.message}`)
     }
   }
 
@@ -230,6 +234,7 @@ export default function Bills() {
         paid={selectedBill ? !!checks[selectedBill.id] : false}
         onClose={() => setSelectedBill(null)}
         onEdit={openEdit}
+        onTogglePaid={(id) => toggleBillPaid(id, year, month)}
       />
 
       {/* Add/Edit Modal */}

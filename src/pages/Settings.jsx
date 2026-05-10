@@ -132,6 +132,7 @@ export default function Settings() {
         for (let i = 0; i < incoming.length; i += 450) {
           const batch = writeBatch(db)
           incoming.slice(i, i + 450).forEach(({ id, ...fields }) => {
+            if (!id) return
             batch.set(doc(db, col, id), fields)
           })
           await batch.commit()

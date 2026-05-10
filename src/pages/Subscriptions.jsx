@@ -53,10 +53,10 @@ export default function Subscriptions() {
   const metrics = useMemo(() => {
     const annual = activeSubs.reduce((s, sub) => s + annualCost(sub), 0)
     const monthly = activeSubs.filter((s) => s.frequency === 'Monthly').reduce((s, sub) => s + Number(sub.amount || 0), 0)
+    const todayDay = new Date().getDate()
     const dueThisMonth = activeSubs.filter((s) => {
       if (s.frequency !== 'Monthly') return false
-      const days = daysUntilDue(s.dueDate)
-      return days >= 0 && days <= 31
+      return Number(s.dueDate) >= todayDay
     }).length
     const nextRenewal = activeSubs
       .map((s) => ({ ...s, days: daysUntilDue(s.dueDate) }))
@@ -77,9 +77,13 @@ export default function Subscriptions() {
   }
 
   const handleSave = async () => {
-    const data = { name: form.name, amount: Number(form.amount), dueDate: Number(form.dueDate), frequency: form.frequency, owner: form.owner }
-    if (editSub) { await updateSubscription(editSub.id, data); setEditSub(null) }
-    else { await addSubscription(data); setShowAdd(false) }
+    const data = { name: form.name, amount: Number(form.amount) || 0, dueDate: Number(form.dueDate) || 1, frequency: form.frequency, owner: form.owner }
+    try {
+      if (editSub) { await updateSubscription(editSub.id, data); setEditSub(null) }
+      else { await addSubscription(data); setShowAdd(false) }
+    } catch (e) {
+      alert(`Save failed: ${e.message}`)
+    }
   }
 
   const handleDelete = async (sub) => {

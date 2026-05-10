@@ -59,16 +59,20 @@ export default function MonthlyPlan() {
 
   const handleSave = async () => {
     if (!editBill) return
-    await updateBill(editBill.id, {
-      name: editForm.name,
-      amount: Number(editForm.amount),
-      dueDate: Number(editForm.dueDate),
-      category: editForm.category,
-      paidBy: editForm.paidBy,
-      accountName: editForm.accountName,
-      autopay: editForm.autopay,
-    })
-    setEditBill(null)
+    try {
+      await updateBill(editBill.id, {
+        name: editForm.name,
+        amount: Number(editForm.amount) || 0,
+        dueDate: Number(editForm.dueDate) || 1,
+        category: editForm.category,
+        paidBy: editForm.paidBy,
+        accountName: editForm.accountName,
+        autopay: editForm.autopay,
+      })
+      setEditBill(null)
+    } catch (e) {
+      alert(`Save failed: ${e.message}`)
+    }
   }
 
   const totalIncome = p1Income + p2Income
