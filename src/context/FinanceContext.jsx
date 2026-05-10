@@ -28,46 +28,44 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     const unsubs = []
-    let loaded = 0
+    // Track which collections have fired at least once — loading clears when all 6 are ready
+    const ready = new Set()
     const total = 6
-
-    const onLoad = () => {
-      loaded++
-      if (loaded >= total) setLoading(false)
+    const markReady = (key) => {
+      ready.add(key)
+      if (ready.size >= total) setLoading(false)
     }
-
     const err = (e) => { setError(e.message); setLoading(false) }
 
     unsubs.push(onSnapshot(collection(db, 'income_sources'), (s) => {
       setIncomeSources(s.docs.map((d) => ({ id: d.id, ...d.data() })))
-      onLoad()
+      markReady('income')
     }, err))
 
     unsubs.push(onSnapshot(collection(db, 'bills'), (s) => {
       setBills(s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((b) => b.active !== false))
-      onLoad()
+      markReady('bills')
     }, err))
 
     unsubs.push(onSnapshot(collection(db, 'credit_cards'), (s) => {
       setCreditCards(s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((c) => c.active !== false))
-      onLoad()
+      markReady('cards')
     }, err))
 
     unsubs.push(onSnapshot(collection(db, 'loans'), (s) => {
       setLoans(s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((l) => l.active !== false))
-      onLoad()
+      markReady('loans')
     }, err))
 
     unsubs.push(onSnapshot(collection(db, 'subscriptions'), (s) => {
       setSubscriptions(s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((s2) => s2.active !== false))
-      onLoad()
+      markReady('subs')
     }, err))
 
-    // Settings
     const settingsRef = doc(db, 'settings', 'app')
     unsubs.push(onSnapshot(settingsRef, (s) => {
       if (s.exists()) setAppSettings((prev) => ({ ...prev, ...s.data() }))
-      onLoad()
+      markReady('settings')
     }, err))
 
     return () => unsubs.forEach((u) => u())
@@ -117,7 +115,8 @@ export function FinanceProvider({ children }) {
   const updateSubscription = (id, data) => updateDoc(doc(db, 'subscriptions', id), { ...data, updatedAt: serverTimestamp() })
   const deleteSubscription = (id) => updateDoc(doc(db, 'subscriptions', id), { active: false })
 
-  const updateIncomeSource = (id, data) => updateDoc(doc(db, 'income_sources', id), { ...data, updatedAt: serverTimestamp() })
+  // setDoc with merge so it creates the doc if it doesn't exist yet
+  const updateIncomeSource = (id, data) => setDoc(doc(db, 'income_sources', id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
 
   const updateSettings = (data) => setDoc(doc(db, 'settings', 'app'), { ...data, updatedAt: serverTimestamp() }, { merge: true })
 

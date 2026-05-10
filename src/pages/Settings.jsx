@@ -11,21 +11,36 @@ export default function Settings() {
 
   const [editIncome, setEditIncome] = useState(null)
   const [incomeForm, setIncomeForm] = useState({})
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [seedStatus, setSeedStatus] = useState('')
   const [seeding, setSeeding] = useState(false)
   const [exporting, setExporting] = useState(false)
 
   const openEditIncome = (src) => {
     setEditIncome(src.id)
+    setSaveError('')
     setIncomeForm({ amount: src.amount, nextPayDate: src.nextPayDate ?? src.next_pay_date ?? '' })
   }
 
   const saveIncome = async (id) => {
-    await updateIncomeSource(id, {
-      amount: Number(incomeForm.amount),
-      nextPayDate: incomeForm.nextPayDate,
-    })
-    setEditIncome(null)
+    if (!incomeForm.amount || Number(incomeForm.amount) <= 0) {
+      setSaveError('Amount must be greater than 0')
+      return
+    }
+    setSaving(true)
+    setSaveError('')
+    try {
+      await updateIncomeSource(id, {
+        amount: Number(incomeForm.amount),
+        nextPayDate: incomeForm.nextPayDate || null,
+      })
+      setEditIncome(null)
+    } catch (e) {
+      setSaveError(`Save failed: ${e.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSeedData = async () => {
@@ -130,10 +145,20 @@ export default function Settings() {
               <div style={{ display: 'flex', gap: 6 }}>
                 {editIncome === src.id ? (
                   <>
-                    <button className="btn btn-green btn-sm" onClick={() => saveIncome(src.id)}>
-                      <Save size={13} /> Save
+                    {saveError && (
+                      <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 6, width: '100%' }}>
+                        {saveError}
+                      </div>
+                    )}
+                    <button
+                      className="btn btn-green btn-sm"
+                      onClick={() => saveIncome(src.id)}
+                      disabled={saving}
+                      style={{ opacity: saving ? 0.6 : 1 }}
+                    >
+                      <Save size={13} /> {saving ? 'Saving...' : 'Save'}
                     </button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => setEditIncome(null)}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setEditIncome(null); setSaveError('') }}>
                       <X size={13} />
                     </button>
                   </>
