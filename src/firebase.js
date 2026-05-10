@@ -1,23 +1,37 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore, enableMultiTabIndexedDbPersistence } from 'firebase/firestore'
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore'
+
+const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID
+
+if (!projectId) {
+  throw new Error(
+    'VITE_FIREBASE_PROJECT_ID is not set. ' +
+    'Make sure your .env file exists and you restarted the dev server after creating it.'
+  )
+}
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
 const app = initializeApp(firebaseConfig)
-export const db = getFirestore(app)
 
-// Enable offline persistence + multi-tab sync so the app works offline
-// and all changes sync across every device/browser automatically
-enableMultiTabIndexedDbPersistence(db).catch(() => {
-  // Falls back gracefully if already enabled or unsupported
+// Modern Firebase 9+ persistence API — enables offline cache + real-time sync
+// across every device and browser tab simultaneously
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
 })
 
 export default app
