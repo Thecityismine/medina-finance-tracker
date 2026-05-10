@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// Medina Finance Tracker — Firestore Security Rules
+// This is a private family app with no user authentication.
+// All read/write is open so data syncs freely across all family devices.
+// Tighten these rules if authentication is added later.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Bills — family bill tracking
+    match /bills/{billId} {
+      allow read, write: if true;
+    }
+
+    // Credit cards & loans — debt tracking
+    match /credit_cards/{cardId} {
+      allow read, write: if true;
+    }
+
+    match /loans/{loanId} {
+      allow read, write: if true;
+    }
+
+    // Income sources — paycheck data
+    match /income_sources/{sourceId} {
+      allow read, write: if true;
+    }
+
+    // Subscriptions — recurring service costs
+    match /subscriptions/{subId} {
+      allow read, write: if true;
+    }
+
+    // Monthly bill checks — paid/unpaid state per month, syncs across devices
+    match /monthly_checks/{monthKey} {
+      allow read, write: if true;
+    }
+
+    // App settings — payoff method, categories, owners
+    match /settings/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
