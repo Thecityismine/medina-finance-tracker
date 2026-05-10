@@ -110,10 +110,10 @@ export default function Dashboard() {
     <div style={{ maxWidth: 1280, margin: '0 auto' }}>
       {/* Page header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
           Good {greeting()}, Medina Family 👋
         </h1>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
           {format(new Date(), 'EEEE, MMMM d, yyyy')} · Financial Command Center
         </div>
       </div>
@@ -241,7 +241,7 @@ function PeriodCard({ label, income, total, paid, unpaid, bills, checks }) {
 
   return (
     <div className="card">
-      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-dim)', marginBottom: 10 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-dim)', marginBottom: 10 }}>
         {label}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
@@ -251,7 +251,7 @@ function PeriodCard({ label, income, total, paid, unpaid, bills, checks }) {
         <MiniStat label="Unpaid" value={fmt(unpaid)} color={unpaid > 0 ? 'var(--amber)' : 'var(--text-dim)'} />
       </div>
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-dim)', marginBottom: 5 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-dim)', marginBottom: 5 }}>
           <span>Paid {paidCount}/{bills.length}</span>
           <span style={{ color: leftover >= 0 ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
             {leftover >= 0 ? '+' : ''}{fmt(leftover)} leftover
@@ -268,8 +268,8 @@ function PeriodCard({ label, income, total, paid, unpaid, bills, checks }) {
 function MiniStat({ label, value, color = 'var(--text)' }) {
   return (
     <div>
-      <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color }}>{value}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color }}>{value}</div>
     </div>
   )
 }
@@ -293,16 +293,16 @@ function UpcomingBills({ bills, checks }) {
             padding: '10px 0', borderBottom: '1px solid var(--border)',
           }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{bill.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{bill.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 1 }}>
                 {bill.paidBy} · {bill.category}
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
                 {fmt(bill.amount ?? bill.defaultAmount)}
               </div>
-              <div style={{ fontSize: 11, color: bill.days <= 3 ? 'var(--red)' : bill.days <= 7 ? 'var(--amber)' : 'var(--text-dim)', marginTop: 1 }}>
+              <div style={{ fontSize: 12, color: bill.days <= 3 ? 'var(--red)' : bill.days <= 7 ? 'var(--amber)' : 'var(--text-dim)', marginTop: 1 }}>
                 {bill.days === 0 ? 'Today' : `In ${bill.days} day${bill.days !== 1 ? 's' : ''}`}
               </div>
             </div>
@@ -324,7 +324,7 @@ function AlertBanner({ type, text }) {
     <div style={{
       background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10,
       padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
-      fontSize: 13, color: s.color,
+      fontSize: 14, color: s.color,
     }}>
       <span>{s.icon}</span>
       {text}
@@ -334,7 +334,7 @@ function AlertBanner({ type, text }) {
 
 function SectionTitle({ children, small }) {
   return (
-    <div style={{ fontSize: small ? 12 : 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
+    <div style={{ fontSize: small ? 13 : 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
       {children}
     </div>
   )

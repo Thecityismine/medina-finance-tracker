@@ -19,19 +19,19 @@ export default function KPICard({ label, value, sub, icon, color = 'var(--text)'
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
             {label}
           </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color, letterSpacing: '-0.5px', lineHeight: 1 }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color, letterSpacing: '-0.5px', lineHeight: 1 }}>
             {value}
           </div>
           {sub && (
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 5 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 5 }}>
               {sub}
             </div>
           )}
           {trend !== undefined && (
-            <div style={{ fontSize: 11, marginTop: 4, color: trend >= 0 ? 'var(--green)' : 'var(--red)' }}>
+            <div style={{ fontSize: 12, marginTop: 4, color: trend >= 0 ? 'var(--green)' : 'var(--red)' }}>
               {trend >= 0 ? '▲' : '▼'} {Math.abs(trend)}% vs last month
             </div>
           )}
