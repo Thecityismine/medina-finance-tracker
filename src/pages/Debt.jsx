@@ -41,30 +41,59 @@ export default function Debt() {
   const openEditCard = (c) => {
     setEditCard(c)
     setCardForm({
-      name: c.name, balance: c.balance, creditLimit: c.creditLimit ?? c.credit_limit ?? '',
-      minPayment: c.minPayment ?? c.min_payment ?? '', apr: c.apr, dueDate: c.dueDate, ownedBy: c.ownedBy,
+      name: c.name ?? '',
+      balance: c.balance ?? '',
+      creditLimit: c.creditLimit ?? c.credit_limit ?? '',
+      minPayment: c.minPayment ?? c.min_payment ?? '',
+      apr: c.apr ?? '',
+      dueDate: c.dueDate ?? '',
+      ownedBy: c.ownedBy ?? 'Jorge',
     })
   }
 
   const openEditLoan = (l) => {
     setEditLoan(l)
     setLoanForm({
-      name: l.name, balance: l.balance,
+      name: l.name ?? '',
+      balance: l.balance ?? '',
       monthlyPayment: l.monthlyPayment ?? l.monthly_payment ?? '',
-      apr: l.apr, dueDate: l.dueDate,
+      apr: l.apr ?? '',
+      dueDate: l.dueDate ?? '',
     })
   }
 
   const saveCard = async () => {
-    const data = { name: cardForm.name, balance: Number(cardForm.balance), creditLimit: Number(cardForm.creditLimit), minPayment: Number(cardForm.minPayment), apr: Number(cardForm.apr), dueDate: Number(cardForm.dueDate), ownedBy: cardForm.ownedBy }
-    if (editCard) { await updateCreditCard(editCard.id, data); setEditCard(null) }
-    else { await addCreditCard(data); setShowAddCard(false) }
+    const data = {
+      name: cardForm.name,
+      balance: Number(cardForm.balance) || 0,
+      creditLimit: Number(cardForm.creditLimit) || 0,
+      minPayment: Number(cardForm.minPayment) || 0,
+      apr: Number(cardForm.apr) || 0,
+      dueDate: Number(cardForm.dueDate) || 0,
+      ownedBy: cardForm.ownedBy,
+    }
+    try {
+      if (editCard) { await updateCreditCard(editCard.id, data); setEditCard(null) }
+      else { await addCreditCard(data); setShowAddCard(false) }
+    } catch (e) {
+      alert(`Save failed: ${e.message}`)
+    }
   }
 
   const saveLoan = async () => {
-    const data = { name: loanForm.name, balance: Number(loanForm.balance), monthlyPayment: Number(loanForm.monthlyPayment), apr: Number(loanForm.apr), dueDate: Number(loanForm.dueDate) }
-    if (editLoan) { await updateLoan(editLoan.id, data); setEditLoan(null) }
-    else { await addLoan(data); setShowAddLoan(false) }
+    const data = {
+      name: loanForm.name,
+      balance: Number(loanForm.balance) || 0,
+      monthlyPayment: Number(loanForm.monthlyPayment) || 0,
+      apr: Number(loanForm.apr) || 0,
+      dueDate: Number(loanForm.dueDate) || 0,
+    }
+    try {
+      if (editLoan) { await updateLoan(editLoan.id, data); setEditLoan(null) }
+      else { await addLoan(data); setShowAddLoan(false) }
+    } catch (e) {
+      alert(`Save failed: ${e.message}`)
+    }
   }
 
   const deleteCard = async (c) => { if (confirm(`Delete "${c.name}"?`)) await deleteCreditCard(c.id) }
