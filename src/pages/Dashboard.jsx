@@ -108,16 +108,6 @@ export default function Dashboard() {
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
-          Good {greeting()}, Medina Family 👋
-        </h1>
-        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
-          {format(new Date(), 'EEEE, MMMM d, yyyy')} · Financial Command Center
-        </div>
-      </div>
-
       {/* Smart Alerts */}
       {alerts.length > 0 && (
         <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 8 }}>
