@@ -29,9 +29,10 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     const unsubs = []
-    // Track which collections have fired at least once — loading clears when all 7 are ready
+    // Track which collections have fired at least once — loading clears when all 6 are ready
+    // expenses loads independently and does not block initial render
     const ready = new Set()
-    const total = 7
+    const total = 6
     const markReady = (key) => {
       ready.add(key)
       if (ready.size >= total) setLoading(false)
@@ -65,8 +66,7 @@ export function FinanceProvider({ children }) {
 
     unsubs.push(onSnapshot(collection(db, 'expenses'), (s) => {
       setExpenses(s.docs.map((d) => ({ id: d.id, ...d.data() })))
-      markReady('expenses')
-    }, err))
+    }, (e) => console.warn('expenses listener:', e.message)))
 
     const settingsRef = doc(db, 'settings', 'app')
     unsubs.push(onSnapshot(settingsRef, (s) => {
