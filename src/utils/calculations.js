@@ -22,7 +22,9 @@ export function getPayPeriods(year, month) {
 
 // Assigns a bill to period 1 or 2 based on its dueDate (day of month)
 export function billPeriod(dueDate) {
-  return dueDate <= 15 ? 1 : 2
+  const day = Number(dueDate)
+  // NaN or 0 (missing date) defaults to period 1
+  return !day || day <= 15 ? 1 : 2
 }
 
 // Filter bills by period

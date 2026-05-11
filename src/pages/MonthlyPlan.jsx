@@ -49,7 +49,7 @@ export default function MonthlyPlan() {
     setEditForm({
       name: bill.name,
       amount: bill.amount ?? bill.defaultAmount ?? '',
-      dueDate: bill.dueDate ?? '',
+      dueDate: bill.dueDate ?? bill.due_date ?? '',
       category: bill.category ?? '',
       paidBy: bill.paidBy ?? '',
       accountName: bill.accountName ?? '',

@@ -100,7 +100,7 @@ export default function PaycheckCard({
                     {bill.name}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)', display: 'flex', gap: 6, marginTop: 1 }}>
-                    <span>Due {bill.dueDate}th</span>
+                    <span>Due {bill.dueDate ?? bill.due_date}th</span>
                     {bill.autopay && <span style={{ color: 'var(--green)' }}>· Auto</span>}
                     <span>· {bill.paidBy}</span>
                   </div>
