@@ -3,8 +3,9 @@ import Badge from '../ui/Badge'
 import { fmt, billStatus, daysUntilDue } from '../../utils/calculations'
 
 export default function BillRow({ bill, paid, onTogglePaid, onEdit, onDelete, onSkip, onClick, showCheckbox = true }) {
-  const status = billStatus(bill.dueDate, paid)
-  const days = daysUntilDue(bill.dueDate)
+  const dueDay = bill.dueDate ?? bill.due_date
+  const status = billStatus(dueDay, paid)
+  const days = daysUntilDue(dueDay)
 
   const ownerVariant = (bill.paidBy ?? bill.paid_by ?? '').toLowerCase()
 
@@ -38,7 +39,7 @@ export default function BillRow({ bill, paid, onTogglePaid, onEdit, onDelete, on
       </td>
       <td>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          {bill.dueDate ? `${bill.dueDate}th` : '—'}
+          {dueDay ? `${dueDay}th` : '—'}
           {!paid && days <= 7 && days >= 0 && (
             <span style={{ fontSize: 10, color: 'var(--amber)', marginLeft: 4 }}>
               ({days === 0 ? 'today' : `${days}d`})
@@ -48,7 +49,7 @@ export default function BillRow({ bill, paid, onTogglePaid, onEdit, onDelete, on
       </td>
       <td>
         <span style={{ fontWeight: 600, color: paid ? 'var(--text-dim)' : 'var(--text)' }}>
-          {bill.varies ? '~' : ''}{fmt(bill.amount ?? bill.defaultAmount)}
+          {bill.varies ? '~' : ''}{fmt(bill.amount ?? bill.defaultAmount ?? bill.default_amount)}
         </span>
       </td>
       <td>

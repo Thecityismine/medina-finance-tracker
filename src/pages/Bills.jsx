@@ -69,8 +69,8 @@ export default function Bills() {
     const total = activeBills.length
     const dueSoon = activeBills.filter((b) => { const d = daysUntilDue(b.dueDate ?? b.due_date); return d >= 0 && d <= 7 && !checks[b.id] }).length
     const autopay = activeBills.filter((b) => b.autopay).length
-    const totalAmt = activeBills.reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? 0), 0)
-    const paidAmt = activeBills.filter((b) => checks[b.id]).reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? 0), 0)
+    const totalAmt = activeBills.reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0), 0)
+    const paidAmt = activeBills.filter((b) => checks[b.id]).reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0), 0)
     return { paid, total, dueSoon, autopay, totalAmt, paidAmt }
   }, [activeBills, checks])
 
@@ -87,8 +87,8 @@ export default function Bills() {
     setEditBill(bill)
     setForm({
       name: bill.name,
-      amount: bill.amount ?? bill.defaultAmount ?? '',
-      dueDate: bill.dueDate ?? '',
+      amount: bill.amount ?? bill.defaultAmount ?? bill.default_amount ?? '',
+      dueDate: bill.dueDate ?? bill.due_date ?? '',
       category: bill.category ?? 'Utility',
       paidBy: bill.paidBy ?? 'Jorge',
       accountName: bill.accountName ?? '',
