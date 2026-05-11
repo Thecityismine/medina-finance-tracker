@@ -28,6 +28,8 @@ export default function Debt() {
     const ccDebt = creditCards.reduce((s, c) => s + Number(c.balance || 0), 0)
     const loanDebt = loans.reduce((s, l) => s + Number(l.balance || 0), 0)
     const totalDebt = ccDebt + loanDebt
+    const totalLimit = creditCards.reduce((s, c) => s + Number(c.creditLimit ?? c.credit_limit ?? 0), 0)
+    const availableCredit = totalLimit - ccDebt
     const jorgeDebt = creditCards.filter((c) => (c.ownedBy ?? c.owned_by) === 'Jorge').reduce((s, c) => s + Number(c.balance || 0), 0)
     const anseliDebt = creditCards.filter((c) => (c.ownedBy ?? c.owned_by) === 'Anseli').reduce((s, c) => s + Number(c.balance || 0), 0)
     const utilPct = creditUtilization(creditCards)
@@ -49,7 +51,7 @@ export default function Debt() {
     return {
       ccDebt, loanDebt, totalDebt, jorgeDebt, anseliDebt, utilPct,
       highestAPR, highestBalance, totalMin, ordered, monthlyInterest,
-      minOnlyMonths, withExtraMonths,
+      minOnlyMonths, withExtraMonths, totalLimit, availableCredit,
     }
   }, [creditCards, loans, payoffMethod])
 
@@ -152,6 +154,12 @@ export default function Debt() {
                 sub={metrics.utilPct > 70 ? '⚠ Critical' : metrics.utilPct > 30 ? '⚠ High' : '✓ Healthy'}
                 color={metrics.utilPct > 70 ? 'var(--red)' : metrics.utilPct > 30 ? 'var(--amber)' : 'var(--green)'}
               />
+              {metrics.totalLimit > 0 && (
+                <HeroStat label="Total Credit Limit" value={fmt(metrics.totalLimit)} sub="across all cards" />
+              )}
+              {metrics.totalLimit > 0 && (
+                <HeroStat label="Available Credit" value={fmt(metrics.availableCredit)} sub="remaining to spend" color="var(--green)" />
+              )}
               {metrics.highestAPR && (
                 <HeroStat label="Highest APR" value={`${metrics.highestAPR.apr}%`} sub={metrics.highestAPR.name} color="var(--red)" />
               )}
