@@ -73,11 +73,22 @@ export default function Subscriptions() {
 
   const openEdit = (sub) => {
     setEditSub(sub)
-    setForm({ name: sub.name, amount: sub.amount, dueDate: sub.dueDate, frequency: sub.frequency, owner: sub.owner ?? 'Jorge' })
+    setForm({
+      name: sub.name, amount: sub.amount, dueDate: sub.dueDate,
+      frequency: sub.frequency, owner: sub.owner ?? 'Jorge',
+      nextBillingDate: sub.nextBillingDate ?? '',
+      paymentMethod: sub.paymentMethod ?? '',
+    })
   }
 
   const handleSave = async () => {
-    const data = { name: form.name, amount: Number(form.amount) || 0, dueDate: Number(form.dueDate) || 1, frequency: form.frequency, owner: form.owner }
+    const data = {
+      name: form.name, amount: Number(form.amount) || 0,
+      dueDate: Number(form.dueDate) || 1, frequency: form.frequency,
+      owner: form.owner,
+      nextBillingDate: form.nextBillingDate || null,
+      paymentMethod: form.paymentMethod || '',
+    }
     try {
       if (editSub) { await updateSubscription(editSub.id, data); setEditSub(null) }
       else { await addSubscription(data); setShowAdd(false) }
@@ -173,9 +184,10 @@ export default function Subscriptions() {
               <tr>
                 <th onClick={() => sort('name')}>Name{sortIcon('name')}</th>
                 <th onClick={() => sort('frequency')}>Frequency{sortIcon('frequency')}</th>
-                <th onClick={() => sort('dueDate')}>Due{sortIcon('dueDate')}</th>
+                <th>Next Billing</th>
                 <th onClick={() => sort('amount')}>Amount{sortIcon('amount')}</th>
                 <th>Annual Cost</th>
+                <th>Payment Method</th>
                 <th onClick={() => sort('owner')}>Owner{sortIcon('owner')}</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
@@ -187,9 +199,10 @@ export default function Subscriptions() {
                     <div style={{ fontWeight: 500, color: 'var(--text)' }}>{sub.name}</div>
                   </td>
                   <td><Badge variant={sub.frequency?.toLowerCase()} label={sub.frequency} size="sm" /></td>
-                  <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.dueDate ? `${sub.dueDate}th` : '—'}</span></td>
+                  <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.nextBillingDate ?? '—'}</span></td>
                   <td><span style={{ fontWeight: 600, color: 'var(--text)' }}>{fmt(sub.amount)}</span></td>
                   <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmt(annualCost(sub))}/yr</span></td>
+                  <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.paymentMethod || '—'}</span></td>
                   <td><Badge variant={sub.owner?.toLowerCase()} label={sub.owner} size="sm" /></td>
                   <td>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
@@ -212,13 +225,13 @@ export default function Subscriptions() {
         <FormRow label="Name"><input className="inp" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Netflix" /></FormRow>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormRow label="Amount ($)"><input className="inp" type="number" value={form.amount || ''} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></FormRow>
-          <FormRow label="Due Date">
-            <input className="inp" type="number" min="1" max="31" value={form.dueDate || ''} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
-          </FormRow>
           <FormRow label="Frequency">
             <select className="inp" value={form.frequency || 'Monthly'} onChange={(e) => setForm({ ...form, frequency: e.target.value })}>
               <option>Monthly</option><option>Quarterly</option><option>6 Months</option><option>Yearly</option>
             </select>
+          </FormRow>
+          <FormRow label="Next Billing Date">
+            <input className="inp" type="date" value={form.nextBillingDate || ''} onChange={(e) => setForm({ ...form, nextBillingDate: e.target.value })} />
           </FormRow>
           <FormRow label="Owner">
             <select className="inp" value={form.owner || 'Jorge'} onChange={(e) => setForm({ ...form, owner: e.target.value })}>
@@ -226,6 +239,9 @@ export default function Subscriptions() {
             </select>
           </FormRow>
         </div>
+        <FormRow label="Payment Method (card or account)">
+          <input className="inp" value={form.paymentMethod || ''} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} placeholder="e.g. Chase Sapphire, BOA Checking" />
+        </FormRow>
         <ModalFooter>
           <button className="btn btn-ghost" onClick={() => { setShowAdd(false); setEditSub(null) }}>Cancel</button>
           <button className="btn btn-green" onClick={handleSave}>{editSub ? 'Save' : 'Add'}</button>
@@ -235,4 +251,4 @@ export default function Subscriptions() {
   )
 }
 
-function defaultForm() { return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge' } }
+function defaultForm() { return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', nextBillingDate: '', paymentMethod: '' } }

@@ -34,6 +34,50 @@ export function billsForPeriod(bills, period) {
   return bills.filter((b) => b.active !== false && billPeriod(b.dueDate ?? b.due_date) === period)
 }
 
+// Advance a date forward by a subscription's frequency
+function advanceByFrequency(date, frequency) {
+  const d = new Date(date)
+  switch (frequency) {
+    case 'Quarterly': d.setMonth(d.getMonth() + 3); break
+    case '6 Months':  d.setMonth(d.getMonth() + 6); break
+    case 'Yearly':    d.setFullYear(d.getFullYear() + 1); break
+    default:          d.setMonth(d.getMonth() + 1) // Monthly
+  }
+  return d
+}
+
+// Given a subscription's nextBillingDate and frequency, return the actual billing
+// date within year/month, or null if not billed that month.
+function billingDateInMonth(sub, year, month) {
+  if (!sub.nextBillingDate) return null
+  let d = new Date(sub.nextBillingDate)
+  const start = new Date(year, month - 1, 1)
+  const end   = new Date(year, month, 0)   // last day of month
+  // Advance forward until we reach or pass the target month
+  while (d < start) d = advanceByFrequency(d, sub.frequency)
+  return d <= end ? d : null
+}
+
+// Returns { p1: [], p2: [] } of subscriptions due in the given year/month,
+// split by pay period. Each item gets a _billingDate property.
+export function subsForMonth(subscriptions, year, month) {
+  const p1 = [], p2 = []
+  for (const sub of subscriptions) {
+    if (sub.active === false) continue
+    let billingDate = billingDateInMonth(sub, year, month)
+    // Fallback for monthly subs without a nextBillingDate: use dueDate day
+    if (!billingDate && sub.frequency === 'Monthly') {
+      const day = Number(sub.dueDate) || 1
+      billingDate = new Date(year, month - 1, day)
+    }
+    if (!billingDate) continue
+    const entry = { ...sub, _billingDate: billingDate }
+    if (billingDate.getDate() < 15) p1.push(entry)
+    else p2.push(entry)
+  }
+  return { p1, p2 }
+}
+
 // Sum amounts
 export function sumBills(bills) {
   return bills.reduce((acc, b) => acc + (Number(b.amount ?? b.defaultAmount ?? b.default_amount) || 0), 0)

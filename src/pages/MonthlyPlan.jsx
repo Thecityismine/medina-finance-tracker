@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useFinance } from '../context/FinanceContext'
 import PaycheckCard from '../components/bills/PaycheckCard'
 import {
-  fmt, sumBills, billsForPeriod, incomeForPeriod, monthLabel, today,
+  fmt, sumBills, billsForPeriod, incomeForPeriod, subsForMonth, monthLabel, today,
 } from '../utils/calculations'
 import { ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
 
 export default function MonthlyPlan() {
-  const { bills, incomeSources, monthlyChecks, loadMonthlyChecks, toggleBillPaid } = useFinance()
+  const { bills, subscriptions, incomeSources, monthlyChecks, loadMonthlyChecks, toggleBillPaid } = useFinance()
 
   const now = today()
   const [year, setYear] = useState(now.year)
@@ -30,6 +30,12 @@ export default function MonthlyPlan() {
   const p1Paid = Object.keys(checks).filter((id) => checks[id] && p1Bills.find((b) => b.id === id))
   const p2Paid = Object.keys(checks).filter((id) => checks[id] && p2Bills.find((b) => b.id === id))
 
+  const activeSubs = subscriptions.filter((s) => s.active !== false)
+  const { p1: subsP1, p2: subsP2 } = useMemo(
+    () => subsForMonth(activeSubs, year, month),
+    [activeSubs, year, month]
+  )
+
   const handlePrev = () => {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }
     else setMonth(m => m - 1)
@@ -41,7 +47,8 @@ export default function MonthlyPlan() {
   const handleToday = () => { setYear(now.year); setMonth(now.month) }
 
   const totalIncome = p1Income + p2Income
-  const totalBills = sumBills([...p1Bills, ...p2Bills])
+  const subTotal = [...subsP1, ...subsP2].reduce((s, sub) => s + Number(sub.amount || 0), 0)
+  const totalBills = sumBills([...p1Bills, ...p2Bills]) + subTotal
   const totalLeftover = totalIncome - totalBills
   const isCurrentMonth = year === now.year && month === now.month
 
@@ -105,6 +112,7 @@ export default function MonthlyPlan() {
           income={p1Income}
           bills={p1Bills}
           paidBills={p1Paid}
+          subscriptions={subsP1}
           onTogglePaid={toggleBillPaid}
           year={year}
           month={month}
@@ -115,6 +123,7 @@ export default function MonthlyPlan() {
           income={p2Income}
           bills={p2Bills}
           paidBills={p2Paid}
+          subscriptions={subsP2}
           onTogglePaid={toggleBillPaid}
           year={year}
           month={month}
