@@ -3,7 +3,7 @@ import Badge from '../ui/Badge'
 
 export default function PaycheckCard({
   period, label, income, bills, paidBills = [],
-  onTogglePaid, onEditBill, year, month,
+  onTogglePaid, year, month,
 }) {
   const totalBills = sumBills(bills)
   const paid = sumBills(bills.filter((b) => paidBills.includes(b.id)))
@@ -106,20 +106,8 @@ export default function PaycheckCard({
                   </div>
                 </div>
                 <div style={{ fontWeight: 600, fontSize: 13, color: isPaid ? 'var(--text-dim)' : 'var(--text)', flexShrink: 0 }}>
-                  {bill.varies ? '~' : ''}{fmt(bill.amount ?? bill.defaultAmount)}
+                  {bill.varies ? '~' : ''}{fmt(bill.amount ?? bill.defaultAmount ?? bill.default_amount)}
                 </div>
-                {onEditBill && (
-                  <button
-                    className="btn-icon btn-sm"
-                    onClick={() => onEditBill(bill)}
-                    style={{ flexShrink: 0 }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                  </button>
-                )}
               </div>
             )
           })}

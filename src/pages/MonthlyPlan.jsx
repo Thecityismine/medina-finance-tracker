@@ -1,21 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useFinance } from '../context/FinanceContext'
 import PaycheckCard from '../components/bills/PaycheckCard'
-import Modal from '../components/ui/Modal'
-import { FormRow, ModalFooter } from '../components/ui/Modal'
 import {
-  fmt, billsForPeriod, incomeForPeriod, monthLabel, today,
+  fmt, sumBills, billsForPeriod, incomeForPeriod, monthLabel, today,
 } from '../utils/calculations'
 import { ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
 
 export default function MonthlyPlan() {
-  const { bills, incomeSources, monthlyChecks, loadMonthlyChecks, toggleBillPaid, updateBill } = useFinance()
+  const { bills, incomeSources, monthlyChecks, loadMonthlyChecks, toggleBillPaid } = useFinance()
 
   const now = today()
   const [year, setYear] = useState(now.year)
   const [month, setMonth] = useState(now.month)
-  const [editBill, setEditBill] = useState(null)
-  const [editForm, setEditForm] = useState({})
 
   const checksKey = `${year}-${month}`
   const checks = monthlyChecks[checksKey] ?? {}
@@ -44,39 +40,8 @@ export default function MonthlyPlan() {
   }
   const handleToday = () => { setYear(now.year); setMonth(now.month) }
 
-  const openEdit = (bill) => {
-    setEditBill(bill)
-    setEditForm({
-      name: bill.name,
-      amount: bill.amount ?? bill.defaultAmount ?? '',
-      dueDate: bill.dueDate ?? bill.due_date ?? '',
-      category: bill.category ?? '',
-      paidBy: bill.paidBy ?? '',
-      accountName: bill.accountName ?? '',
-      autopay: bill.autopay ?? false,
-    })
-  }
-
-  const handleSave = async () => {
-    if (!editBill) return
-    try {
-      await updateBill(editBill.id, {
-        name: editForm.name,
-        amount: Number(editForm.amount) || 0,
-        dueDate: Number(editForm.dueDate) || 1,
-        category: editForm.category,
-        paidBy: editForm.paidBy,
-        accountName: editForm.accountName,
-        autopay: editForm.autopay,
-      })
-      setEditBill(null)
-    } catch (e) {
-      alert(`Save failed: ${e.message}`)
-    }
-  }
-
   const totalIncome = p1Income + p2Income
-  const totalBills = [...p1Bills, ...p2Bills].reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? 0), 0)
+  const totalBills = sumBills([...p1Bills, ...p2Bills])
   const totalLeftover = totalIncome - totalBills
   const isCurrentMonth = year === now.year && month === now.month
 
@@ -141,7 +106,6 @@ export default function MonthlyPlan() {
           bills={p1Bills}
           paidBills={p1Paid}
           onTogglePaid={toggleBillPaid}
-          onEditBill={openEdit}
           year={year}
           month={month}
         />
@@ -152,50 +116,10 @@ export default function MonthlyPlan() {
           bills={p2Bills}
           paidBills={p2Paid}
           onTogglePaid={toggleBillPaid}
-          onEditBill={openEdit}
           year={year}
           month={month}
         />
       </div>
-
-      {/* Edit Bill Modal */}
-      <Modal open={!!editBill} onClose={() => setEditBill(null)} title="Edit Bill">
-        <FormRow label="Bill Name">
-          <input className="inp" value={editForm.name || ''} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
-        </FormRow>
-        <FormRow label="Amount">
-          <input className="inp" type="number" value={editForm.amount || ''} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
-        </FormRow>
-        <FormRow label="Due Date (day of month)">
-          <input className="inp" type="number" min="1" max="31" value={editForm.dueDate || ''} onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} />
-        </FormRow>
-        <FormRow label="Category">
-          <select className="inp" value={editForm.category || ''} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
-            {['Rent','Credit Card','Utility','Personal','Loan','Investment','Subscription'].map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </FormRow>
-        <FormRow label="Paid By">
-          <select className="inp" value={editForm.paidBy || ''} onChange={(e) => setEditForm({ ...editForm, paidBy: e.target.value })}>
-            <option>Jorge</option>
-            <option>Anseli</option>
-          </select>
-        </FormRow>
-        <FormRow label="Account / Payment Method">
-          <input className="inp" value={editForm.accountName || ''} onChange={(e) => setEditForm({ ...editForm, accountName: e.target.value })} />
-        </FormRow>
-        <FormRow label="">
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--text)' }}>
-            <input type="checkbox" checked={!!editForm.autopay} onChange={(e) => setEditForm({ ...editForm, autopay: e.target.checked })} />
-            Autopay enabled
-          </label>
-        </FormRow>
-        <ModalFooter>
-          <button className="btn btn-ghost" onClick={() => setEditBill(null)}>Cancel</button>
-          <button className="btn btn-green" onClick={handleSave}>Save Changes</button>
-        </ModalFooter>
-      </Modal>
     </div>
   )
 }
