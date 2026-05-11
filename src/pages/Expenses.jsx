@@ -9,9 +9,9 @@ import { format } from 'date-fns'
 
 const CATEGORIES = [
   'Groceries', 'Dining Out', 'Transportation', 'Fuel',
-  'Doctor Visits', 'Pharmacy', 'Education', 'Shopping',
-  'Entertainment', 'Travel', 'Gifts', 'Technology',
-  'Home Maintenance', 'Miscellaneous',
+  'Doctor Visits', 'Pharmacy', 'Education', 'Kids School',
+  'Shopping', 'Entertainment', 'Travel', 'Gifts', 'Technology',
+  'Home Maintenance', 'Auto Repair', 'Miscellaneous',
 ]
 
 const CATEGORY_EMOJI = {
@@ -22,12 +22,14 @@ const CATEGORY_EMOJI = {
   'Doctor Visits': '🏥',
   'Pharmacy': '💊',
   'Education': '🎓',
+  'Kids School': '🏫',
   'Shopping': '🛍️',
   'Entertainment': '🎬',
   'Travel': '✈️',
   'Gifts': '🎁',
   'Technology': '📱',
   'Home Maintenance': '🔧',
+  'Auto Repair': '🔩',
   'Miscellaneous': '📂',
 }
 
@@ -45,6 +47,8 @@ const CATEGORY_COLOR = {
   'Gifts': 'var(--text-muted)',
   'Technology': 'var(--blue)',
   'Home Maintenance': 'var(--amber)',
+  'Auto Repair': 'var(--amber)',
+  'Kids School': 'var(--blue)',
   'Miscellaneous': 'var(--text-dim)',
 }
 
