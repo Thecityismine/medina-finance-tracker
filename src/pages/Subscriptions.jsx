@@ -78,6 +78,7 @@ export default function Subscriptions() {
       frequency: sub.frequency, owner: sub.owner ?? 'Jorge',
       nextBillingDate: sub.nextBillingDate ?? '',
       paymentMethod: sub.paymentMethod ?? '',
+      payPeriod: sub.payPeriod ?? '',
     })
   }
 
@@ -88,6 +89,7 @@ export default function Subscriptions() {
       owner: form.owner,
       nextBillingDate: form.nextBillingDate || null,
       paymentMethod: form.paymentMethod || '',
+      payPeriod: form.payPeriod ? Number(form.payPeriod) : null,
     }
     try {
       if (editSub) { await updateSubscription(editSub.id, data); setEditSub(null) }
@@ -242,6 +244,13 @@ export default function Subscriptions() {
         <FormRow label="Payment Method (card or account)">
           <input className="inp" value={form.paymentMethod || ''} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} placeholder="e.g. Chase Sapphire, BOA Checking" />
         </FormRow>
+        <FormRow label="Pay Period">
+          <select className="inp" value={form.payPeriod ?? ''} onChange={(e) => setForm({ ...form, payPeriod: e.target.value })}>
+            <option value="">Auto (by billing date)</option>
+            <option value="1">Period 1 · 1st – 14th</option>
+            <option value="2">Period 2 · 15th – 31st</option>
+          </select>
+        </FormRow>
         <ModalFooter>
           <button className="btn btn-ghost" onClick={() => { setShowAdd(false); setEditSub(null) }}>Cancel</button>
           <button className="btn btn-green" onClick={handleSave}>{editSub ? 'Save' : 'Add'}</button>
@@ -251,4 +260,4 @@ export default function Subscriptions() {
   )
 }
 
-function defaultForm() { return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', nextBillingDate: '', paymentMethod: '' } }
+function defaultForm() { return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', nextBillingDate: '', paymentMethod: '', payPeriod: '' } }

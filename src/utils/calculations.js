@@ -60,6 +60,7 @@ function billingDateInMonth(sub, year, month) {
 
 // Returns { p1: [], p2: [] } of subscriptions due in the given year/month,
 // split by pay period. Each item gets a _billingDate property.
+// If sub.payPeriod is set (1 or 2), it overrides the date-based assignment.
 export function subsForMonth(subscriptions, year, month) {
   const p1 = [], p2 = []
   for (const sub of subscriptions) {
@@ -72,7 +73,9 @@ export function subsForMonth(subscriptions, year, month) {
     }
     if (!billingDate) continue
     const entry = { ...sub, _billingDate: billingDate }
-    if (billingDate.getDate() < 15) p1.push(entry)
+    // Manual override takes precedence over date-based period
+    const period = sub.payPeriod ? Number(sub.payPeriod) : (billingDate.getDate() < 15 ? 1 : 2)
+    if (period === 1) p1.push(entry)
     else p2.push(entry)
   }
   return { p1, p2 }
