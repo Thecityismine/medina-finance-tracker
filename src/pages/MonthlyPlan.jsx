@@ -136,7 +136,7 @@ export default function MonthlyPlan() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
         <PaycheckCard
           period={1}
-          label="1st – 15th"
+          label="1st – 14th"
           income={p1Income}
           bills={p1Bills}
           paidBills={p1Paid}
@@ -147,7 +147,7 @@ export default function MonthlyPlan() {
         />
         <PaycheckCard
           period={2}
-          label="16th – 31st"
+          label="15th – 31st"
           income={p2Income}
           bills={p2Bills}
           paidBills={p2Paid}

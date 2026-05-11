@@ -8,23 +8,25 @@ export const fmtFull = (n) =>
 
 export const fmtPct = (n) => `${Math.round(n ?? 0)}%`
 
-// Returns { start, end } for period 1 (days 1-15) and period 2 (days 16-end)
+// Returns { start, end } for period 1 (days 1-14) and period 2 (days 15-end)
+// Period 2 starts on the 15th because that's when the second paycheck arrives
 export function getPayPeriods(year, month) {
   const p1Start = new Date(year, month - 1, 1)
-  const p1End = new Date(year, month - 1, 15)
-  const p2Start = new Date(year, month - 1, 16)
+  const p1End = new Date(year, month - 1, 14)
+  const p2Start = new Date(year, month - 1, 15)
   const p2End = new Date(year, month, 0) // last day of month
   return [
-    { period: 1, start: p1Start, end: p1End, label: '1st – 15th' },
-    { period: 2, start: p2Start, end: p2End, label: '16th – 31st' },
+    { period: 1, start: p1Start, end: p1End, label: '1st – 14th' },
+    { period: 2, start: p2Start, end: p2End, label: '15th – 31st' },
   ]
 }
 
 // Assigns a bill to period 1 or 2 based on its dueDate (day of month)
+// Bills due on the 15th+ are paid with the 15th paycheck → period 2
 export function billPeriod(dueDate) {
   const day = Number(dueDate)
   // NaN or 0 (missing date) defaults to period 1
-  return !day || day <= 15 ? 1 : 2
+  return !day || day < 15 ? 1 : 2
 }
 
 // Filter bills by period
@@ -94,7 +96,7 @@ export function calculateTransfer(billsByPerson, incomByPerson) {
 
 // Current pay period (1 or 2) based on today
 export function currentPeriod() {
-  return new Date().getDate() <= 15 ? 1 : 2
+  return new Date().getDate() < 15 ? 1 : 2
 }
 
 // Days until a due date this month
