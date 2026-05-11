@@ -37,6 +37,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Expenses — daily spending by category
+    match /expenses/{expenseId} {
+      allow read, write: if true;
+    }
+
     // App settings — payoff method, categories, owners
     match /settings/{docId} {
       allow read, write: if true;
