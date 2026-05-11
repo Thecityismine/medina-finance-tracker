@@ -422,7 +422,7 @@ function CardItem({ card, onEdit, onDelete }) {
 
           {/* Row 2: balance / limit + utilization % */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 22, fontWeight: 800, color: isPaidOff ? 'var(--green)' : 'var(--red)', letterSpacing: '-0.5px' }}>
+            <span style={{ fontSize: 22, fontWeight: 800, color: isPaidOff ? 'var(--green)' : 'var(--text)', letterSpacing: '-0.5px' }}>
               {fmt(balance)}
             </span>
             {limit > 0 && (
