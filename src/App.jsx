@@ -6,6 +6,7 @@ import MonthlyPlan from './pages/MonthlyPlan'
 import Bills from './pages/Bills'
 import Debt from './pages/Debt'
 import Subscriptions from './pages/Subscriptions'
+import Expenses from './pages/Expenses'
 import Settings from './pages/Settings'
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/bills" element={<Bills />} />
             <Route path="/debt" element={<Debt />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/expenses" element={<Expenses />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

@@ -1,6 +1,7 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, NavLink } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
+import { Settings } from 'lucide-react'
 
 const PAGE_TITLES = {
   '/': 'Dashboard',
@@ -8,6 +9,7 @@ const PAGE_TITLES = {
   '/bills': 'Bills',
   '/debt': 'Debt',
   '/subscriptions': 'Subscriptions',
+  '/expenses': 'Expenses',
   '/settings': 'Settings',
 }
 
@@ -31,20 +33,34 @@ export default function AppShell() {
       }}>
         {/* Mobile header */}
         <header className="mobile-header" style={{
-          padding: '16px 20px',
+          padding: '12px 20px',
           borderBottom: '1px solid var(--border)',
           background: '#0d0d0d',
           display: 'none',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: 7,
-              background: 'var(--green)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: '#0a0a0a' }}>M</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 7,
+                background: 'var(--green)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 900, color: '#0a0a0a' }}>M</span>
+              </div>
+              <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{title}</span>
             </div>
-            <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{title}</span>
+            <NavLink
+              to="/settings"
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 34, height: 34, borderRadius: 8,
+                background: isActive ? 'var(--surface-2)' : 'transparent',
+                color: isActive ? 'var(--green)' : 'var(--text-dim)',
+                textDecoration: 'none',
+              })}
+            >
+              <Settings size={18} />
+            </NavLink>
           </div>
         </header>
 

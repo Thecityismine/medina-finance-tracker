@@ -14,6 +14,7 @@ export function FinanceProvider({ children }) {
   const [creditCards, setCreditCards] = useState([])
   const [loans, setLoans] = useState([])
   const [subscriptions, setSubscriptions] = useState([])
+  const [expenses, setExpenses] = useState([])
   const [monthlyChecks, setMonthlyChecks] = useState({})
   const [appSettings, setAppSettings] = useState({
     payoffMethod: 'avalanche',
@@ -28,9 +29,9 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     const unsubs = []
-    // Track which collections have fired at least once — loading clears when all 6 are ready
+    // Track which collections have fired at least once — loading clears when all 7 are ready
     const ready = new Set()
-    const total = 6
+    const total = 7
     const markReady = (key) => {
       ready.add(key)
       if (ready.size >= total) setLoading(false)
@@ -60,6 +61,11 @@ export function FinanceProvider({ children }) {
     unsubs.push(onSnapshot(collection(db, 'subscriptions'), (s) => {
       setSubscriptions(s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((s2) => s2.active !== false))
       markReady('subs')
+    }, err))
+
+    unsubs.push(onSnapshot(collection(db, 'expenses'), (s) => {
+      setExpenses(s.docs.map((d) => ({ id: d.id, ...d.data() })))
+      markReady('expenses')
     }, err))
 
     const settingsRef = doc(db, 'settings', 'app')
@@ -115,6 +121,10 @@ export function FinanceProvider({ children }) {
   const updateSubscription = (id, data) => updateDoc(doc(db, 'subscriptions', id), { ...data, updatedAt: serverTimestamp() })
   const deleteSubscription = (id) => updateDoc(doc(db, 'subscriptions', id), { active: false })
 
+  const addExpense = (data) => addDoc(collection(db, 'expenses'), { ...data, createdAt: serverTimestamp() })
+  const updateExpense = (id, data) => updateDoc(doc(db, 'expenses', id), { ...data, updatedAt: serverTimestamp() })
+  const deleteExpense = (id) => deleteDoc(doc(db, 'expenses', id))
+
   // setDoc with merge so it creates the doc if it doesn't exist yet
   const updateIncomeSource = (id, data) => setDoc(doc(db, 'income_sources', id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
 
@@ -122,7 +132,7 @@ export function FinanceProvider({ children }) {
 
   const value = {
     // Data
-    incomeSources, bills, creditCards, loans, subscriptions,
+    incomeSources, bills, creditCards, loans, subscriptions, expenses,
     monthlyChecks, appSettings, loading, error,
     // View state
     viewMonth, setViewMonth,
@@ -136,6 +146,8 @@ export function FinanceProvider({ children }) {
     addLoan, updateLoan, deleteLoan,
     // Subscription CRUD
     addSubscription, updateSubscription, deleteSubscription,
+    // Expense CRUD
+    addExpense, updateExpense, deleteExpense,
     // Income
     updateIncomeSource,
     // Settings

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, CalendarDays, Receipt, CreditCard,
-  Repeat, Settings, TrendingDown,
+  LayoutDashboard, CalendarDays, Receipt,
+  Repeat, TrendingDown, ShoppingBag,
 } from 'lucide-react'
 
 const NAV = [
@@ -10,7 +10,7 @@ const NAV = [
   { to: '/bills', icon: Receipt, label: 'Bills' },
   { to: '/debt', icon: TrendingDown, label: 'Debt' },
   { to: '/subscriptions', icon: Repeat, label: 'Subs' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/expenses', icon: ShoppingBag, label: 'Expenses' },
 ]
 
 export default function BottomNav() {
