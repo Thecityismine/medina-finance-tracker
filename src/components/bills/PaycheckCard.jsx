@@ -3,16 +3,20 @@ import Badge from '../ui/Badge'
 
 export default function PaycheckCard({
   period, label, income, bills, paidBills = [],
-  subscriptions = [], onTogglePaid, year, month,
+  subscriptions = [], paidSubs = [], onTogglePaid, year, month,
 }) {
   const billTotal = sumBills(bills)
   const subTotal  = subscriptions.reduce((s, sub) => s + Number(sub.amount || 0), 0)
   const totalBills = billTotal + subTotal
 
-  const paid      = sumBills(bills.filter((b) => paidBills.includes(b.id)))
-  const leftover  = income - totalBills
-  const pct       = income > 0 ? Math.round(totalBills / income * 100) : 0
-  const paidCount = paidBills.filter((id) => bills.find((b) => b.id === id)).length
+  const paidBillsAmount = sumBills(bills.filter((b) => paidBills.includes(b.id)))
+  const paidSubsAmount  = subscriptions.filter((s) => paidSubs.includes(s.id)).reduce((acc, s) => acc + Number(s.amount || 0), 0)
+  const paidTotal       = paidBillsAmount + paidSubsAmount
+
+  const leftover   = income - totalBills
+  const pct        = income > 0 ? Math.round(totalBills / income * 100) : 0
+  const paidCount  = paidBills.filter((id) => bills.find((b) => b.id === id)).length + paidSubs.filter((id) => subscriptions.find((s) => s.id === id)).length
+  const totalCount = bills.length + subscriptions.length
 
   const byCategory = {}
   for (const b of bills) {
@@ -44,18 +48,18 @@ export default function PaycheckCard({
         <Stat label="Committed" value={fmtPct(pct)} color={pct > 80 ? 'var(--red)' : pct > 60 ? 'var(--amber)' : 'var(--text)'} />
       </div>
 
-      {/* Paid progress (bills only — subs are auto-charged) */}
+      {/* Paid progress */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-dim)', marginBottom: 5 }}>
           <span>Paid progress</span>
-          <span style={{ color: 'var(--text-muted)' }}>{paidCount}/{bills.length} bills · {fmt(paid)} of {fmt(billTotal)}</span>
+          <span style={{ color: 'var(--text-muted)' }}>{paidCount}/{totalCount} items · {fmt(paidTotal)} of {fmt(totalBills)}</span>
         </div>
         <div className="prog-track">
           <div
             className="prog-fill"
             style={{
-              width: billTotal > 0 ? `${Math.min(100, (paid / billTotal) * 100)}%` : '0%',
-              background: paid >= billTotal ? 'var(--green)' : 'var(--blue)',
+              width: totalBills > 0 ? `${Math.min(100, (paidTotal / totalBills) * 100)}%` : '0%',
+              background: paidTotal >= totalBills ? 'var(--green)' : 'var(--blue)',
             }}
           />
         </div>
@@ -127,40 +131,43 @@ export default function PaycheckCard({
           }}>
             Subscriptions · {fmt(subTotal)}
           </div>
-          {subscriptions.map((sub) => (
-            <div
-              key={sub.id}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '6px 0', borderBottom: '1px solid var(--border)',
-              }}
-            >
-              {/* No checkbox — auto-charged */}
-              <div style={{
-                width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                background: 'var(--blue-dim)', border: '1px solid var(--blue-border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <span style={{ fontSize: 9, color: 'var(--blue)', fontWeight: 700 }}>A</span>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 13, fontWeight: 500, color: 'var(--text)',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  {sub.name}
+          {subscriptions.map((sub) => {
+            const isPaid = paidSubs.includes(sub.id)
+            return (
+              <div
+                key={sub.id}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '6px 0', borderBottom: '1px solid var(--border)',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isPaid}
+                  onChange={() => onTogglePaid?.(sub.id, year, month)}
+                  style={{ flexShrink: 0 }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 13, fontWeight: 500,
+                    color: isPaid ? 'var(--text-dim)' : 'var(--text)',
+                    textDecoration: isPaid ? 'line-through' : 'none',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {sub.name}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', display: 'flex', gap: 6, marginTop: 1 }}>
+                    <span>{sub.frequency}</span>
+                    {sub.paymentMethod && <span>· {sub.paymentMethod}</span>}
+                    {sub.owner && <span>· {sub.owner}</span>}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', display: 'flex', gap: 6, marginTop: 1 }}>
-                  <span>{sub.frequency}</span>
-                  {sub.paymentMethod && <span>· {sub.paymentMethod}</span>}
-                  {sub.owner && <span>· {sub.owner}</span>}
+                <div style={{ fontWeight: 600, fontSize: 13, color: isPaid ? 'var(--text-dim)' : 'var(--text)', flexShrink: 0 }}>
+                  {fmt(sub.amount)}
                 </div>
               </div>
-              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', flexShrink: 0 }}>
-                {fmt(sub.amount)}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

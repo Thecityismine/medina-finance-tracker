@@ -36,6 +36,9 @@ export default function MonthlyPlan() {
     [activeSubs, year, month]
   )
 
+  const p1PaidSubs = Object.keys(checks).filter((id) => checks[id] && subsP1.find((s) => s.id === id))
+  const p2PaidSubs = Object.keys(checks).filter((id) => checks[id] && subsP2.find((s) => s.id === id))
+
   const handlePrev = () => {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }
     else setMonth(m => m - 1)
@@ -88,7 +91,7 @@ export default function MonthlyPlan() {
         <Divider />
         <SummaryItem label="Monthly Leftover" value={fmt(totalLeftover)} color={totalLeftover >= 0 ? 'var(--green)' : 'var(--red)'} />
         <Divider />
-        <SummaryItem label="Bills Paid" value={`${Object.values(checks).filter(Boolean).length} / ${activeBills.length}`} />
+        <SummaryItem label="Items Paid" value={`${Object.values(checks).filter(Boolean).length} / ${activeBills.length + [...subsP1, ...subsP2].length}`} />
         {isCurrentMonth && (
           <>
             <Divider />
@@ -113,6 +116,7 @@ export default function MonthlyPlan() {
           bills={p1Bills}
           paidBills={p1Paid}
           subscriptions={subsP1}
+          paidSubs={p1PaidSubs}
           onTogglePaid={toggleBillPaid}
           year={year}
           month={month}
@@ -124,6 +128,7 @@ export default function MonthlyPlan() {
           bills={p2Bills}
           paidBills={p2Paid}
           subscriptions={subsP2}
+          paidSubs={p2PaidSubs}
           onTogglePaid={toggleBillPaid}
           year={year}
           month={month}
