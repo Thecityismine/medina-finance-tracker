@@ -66,6 +66,7 @@ export default function Debt() {
       dueDate: c.dueDate ?? c.due_date ?? '',
       ownedBy: c.ownedBy ?? c.owned_by ?? 'Jorge',
       accountNumber: (c.accountNumber ?? '').replace(/\s/g, '').replace(/(.{4})(?=.)/g, '$1 '),
+      notes: c.notes ?? '',
     })
   }
 
@@ -90,6 +91,7 @@ export default function Debt() {
       dueDate: Number(cardForm.dueDate) || 0,
       ownedBy: cardForm.ownedBy,
       accountNumber: cardForm.accountNumber || '',
+      notes: cardForm.notes || '',
     }
     try {
       if (editCard) { await updateCreditCard(editCard.id, data); setEditCard(null) }
@@ -376,6 +378,9 @@ export default function Debt() {
             </select>
           </FormRow>
         </div>
+        <FormRow label="Notes">
+          <textarea className="inp" value={cardForm.notes || ''} onChange={(e) => setCardForm({ ...cardForm, notes: e.target.value })} placeholder="Any notes about this card..." rows={3} style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: 14 }} />
+        </FormRow>
         <ModalFooter>
           <button className="btn btn-ghost" onClick={() => { setShowAddCard(false); setEditCard(null) }}>Cancel</button>
           <button className="btn btn-green" onClick={saveCard}>{editCard ? 'Save' : 'Add Card'}</button>
@@ -496,5 +501,5 @@ function LoanItem({ loan, onEdit, onDelete }) {
 function EmptyState({ text }) {
   return <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--text-dim)', fontSize: 13 }}>{text}</div>
 }
-function defaultCardForm() { return { name: '', balance: '', creditLimit: '', minPayment: '', apr: '', dueDate: '', ownedBy: 'Jorge', accountNumber: '' } }
+function defaultCardForm() { return { name: '', balance: '', creditLimit: '', minPayment: '', apr: '', dueDate: '', ownedBy: 'Jorge', accountNumber: '', notes: '' } }
 function defaultLoanForm() { return { name: '', balance: '', monthlyPayment: '', apr: '', dueDate: '' } }
