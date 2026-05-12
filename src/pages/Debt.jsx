@@ -65,6 +65,7 @@ export default function Debt() {
       apr: c.apr ?? '',
       dueDate: c.dueDate ?? c.due_date ?? '',
       ownedBy: c.ownedBy ?? c.owned_by ?? 'Jorge',
+      accountNumber: c.accountNumber ?? '',
     })
   }
 
@@ -88,6 +89,7 @@ export default function Debt() {
       apr: Number(cardForm.apr) || 0,
       dueDate: Number(cardForm.dueDate) || 0,
       ownedBy: cardForm.ownedBy,
+      accountNumber: cardForm.accountNumber || '',
     }
     try {
       if (editCard) { await updateCreditCard(editCard.id, data); setEditCard(null) }
@@ -361,6 +363,7 @@ export default function Debt() {
       {/* Add/Edit Card Modal */}
       <Modal open={showAddCard || !!editCard} onClose={() => { setShowAddCard(false); setEditCard(null) }} title={editCard ? 'Edit Card' : 'Add Credit Card'}>
         <FormRow label="Card Name"><input className="inp" value={cardForm.name || ''} onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })} placeholder="Chase Sapphire" /></FormRow>
+        <FormRow label="Account Number (last 4 digits)"><input className="inp" value={cardForm.accountNumber || ''} onChange={(e) => setCardForm({ ...cardForm, accountNumber: e.target.value })} placeholder="e.g. 4521" maxLength={20} /></FormRow>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormRow label="Balance ($)"><input className="inp" type="number" value={cardForm.balance || ''} onChange={(e) => setCardForm({ ...cardForm, balance: e.target.value })} /></FormRow>
           <FormRow label="Credit Limit ($)"><input className="inp" type="number" value={cardForm.creditLimit || ''} onChange={(e) => setCardForm({ ...cardForm, creditLimit: e.target.value })} /></FormRow>
@@ -493,5 +496,5 @@ function LoanItem({ loan, onEdit, onDelete }) {
 function EmptyState({ text }) {
   return <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--text-dim)', fontSize: 13 }}>{text}</div>
 }
-function defaultCardForm() { return { name: '', balance: '', creditLimit: '', minPayment: '', apr: '', dueDate: '', ownedBy: 'Jorge' } }
+function defaultCardForm() { return { name: '', balance: '', creditLimit: '', minPayment: '', apr: '', dueDate: '', ownedBy: 'Jorge', accountNumber: '' } }
 function defaultLoanForm() { return { name: '', balance: '', monthlyPayment: '', apr: '', dueDate: '' } }
