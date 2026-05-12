@@ -22,8 +22,8 @@ export default function MonthlyPlan() {
 
   const activeBills = bills.filter((b) => b.active !== false)
 
-  const p1Bills = useMemo(() => billsForPeriod(activeBills, 1), [activeBills])
-  const p2Bills = useMemo(() => billsForPeriod(activeBills, 2), [activeBills])
+  const p1Bills = useMemo(() => billsForPeriod(activeBills, 1).filter((b) => Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0) > 0), [activeBills])
+  const p2Bills = useMemo(() => billsForPeriod(activeBills, 2).filter((b) => Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0) > 0), [activeBills])
   const p1Income = useMemo(() => incomeForPeriod(incomeSources, year, month, 1), [incomeSources, year, month])
   const p2Income = useMemo(() => incomeForPeriod(incomeSources, year, month, 2), [incomeSources, year, month])
 
