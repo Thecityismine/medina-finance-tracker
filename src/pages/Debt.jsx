@@ -65,7 +65,7 @@ export default function Debt() {
       apr: c.apr ?? '',
       dueDate: c.dueDate ?? c.due_date ?? '',
       ownedBy: c.ownedBy ?? c.owned_by ?? 'Jorge',
-      accountNumber: c.accountNumber ?? '',
+      accountNumber: (c.accountNumber ?? '').replace(/\s/g, '').replace(/(.{4})(?=.)/g, '$1 '),
     })
   }
 
