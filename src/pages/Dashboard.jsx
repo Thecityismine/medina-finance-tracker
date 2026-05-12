@@ -11,7 +11,7 @@ import {
 } from '../utils/calculations'
 import {
   DollarSign, TrendingDown, CreditCard, Calendar,
-  AlertTriangle, CheckCircle2, Clock, Zap, Receipt,
+  AlertTriangle, CheckCircle2, Zap,
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -117,33 +117,28 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* KPI Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: 12,
-        marginBottom: 24,
-      }}>
-        <KPICard
-          label="Monthly Income"
-          value={fmt(monthlyIncome)}
-          sub={`${incomeSources.length} source${incomeSources.length !== 1 ? 's' : ''} · ${fmtPct(totalBills / monthlyIncome * 100)} committed`}
-          icon={<DollarSign size={16} />}
-          color="var(--green)"
-        />
-        <KPICard
-          label="Bills This Month"
-          value={fmt(totalBills)}
-          sub={`${allBills.length} bills · ${allBills.filter(b => checks[b.id]).length} paid so far`}
-          icon={<Receipt size={16} />}
-        />
-        <KPICard
-          label="Monthly Leftover"
-          value={fmt(leftover)}
-          sub={leftover < 0 ? '⚠ Spending exceeds income' : `${fmtPct(leftover / monthlyIncome * 100)} of income saved`}
-          color={leftover >= 0 ? 'var(--green)' : 'var(--red)'}
-          icon={<CheckCircle2 size={16} />}
-        />
+      {/* ── Financial Command Center ── */}
+      <style>{`
+        .dash-primary   { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .dash-secondary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+        @media (max-width: 900px) {
+          .dash-primary   { grid-template-columns: 1fr; }
+          .dash-secondary { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+          .dash-secondary { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      {/* Row 1 — Primary */}
+      <div className="dash-primary">
+        <LeftoverHeroCard leftover={leftover} monthlyIncome={monthlyIncome} totalBills={totalBills} />
+        <IncomeCard monthlyIncome={monthlyIncome} sources={incomeSources} pctCommitted={monthlyIncome > 0 ? totalBills / monthlyIncome * 100 : 0} />
+        <BillsCard totalBills={totalBills} paidAmt={p1Paid + p2Paid} allBills={allBills} checks={checks} />
+      </div>
+
+      {/* Row 2 — Secondary */}
+      <div className="dash-secondary">
         <KPICard
           label="Total Debt"
           value={fmt(totalDebt)}
@@ -154,25 +149,23 @@ export default function Dashboard() {
         <KPICard
           label="Credit Utilization"
           value={fmtPct(utilPct)}
-          sub={utilPct > 70 ? '↓ Aim below 30% urgently' : utilPct > 30 ? '↓ Aim below 30% for best score' : '↑ Healthy — keep it up'}
+          sub={utilPct > 70 ? '↓ Critical — pay down now' : utilPct > 30 ? '↓ Aim below 30%' : '↑ Healthy range'}
           color={utilPct > 70 ? 'var(--red)' : utilPct > 30 ? 'var(--amber)' : 'var(--green)'}
           icon={<CreditCard size={16} />}
         />
         <KPICard
+          label="Next Paycheck"
+          value={nextCheck ? fmt(nextCheck.amount) : '—'}
+          sub={nextCheck ? `${nextCheck.person} · ${format(nextCheck.date, 'MMM d')}` : 'No income sources'}
+          color={nextCheck ? 'var(--green)' : 'var(--text-dim)'}
+          icon={<Calendar size={16} />}
+        />
+        <KPICard
           label="Monthly Subs"
           value={fmt(monthlySubs)}
-          sub={`${fmt(annualSubs)}/year across ${subscriptions.length} service${subscriptions.length !== 1 ? 's' : ''}`}
+          sub={`${fmt(annualSubs)}/yr · ${subscriptions.length} active`}
           icon={<Zap size={16} />}
         />
-        {nextCheck && (
-          <KPICard
-            label="Next Paycheck"
-            value={fmt(nextCheck.amount)}
-            sub={`${nextCheck.person} · ${format(nextCheck.date, 'MMM d')}`}
-            color="var(--green)"
-            icon={<Calendar size={16} />}
-          />
-        )}
       </div>
 
       {/* Cash Flow Periods */}
@@ -343,4 +336,112 @@ function greeting() {
   if (h < 12) return 'morning'
   if (h < 17) return 'afternoon'
   return 'evening'
+}
+
+// ─── Primary Command Center Cards ────────────────────────────────────────────
+
+function LeftoverHeroCard({ leftover, monthlyIncome, totalBills }) {
+  const pct = monthlyIncome > 0 ? (leftover / monthlyIncome) * 100 : 0
+  const billsPct = monthlyIncome > 0 ? Math.min(100, (totalBills / monthlyIncome) * 100) : 0
+
+  const status = leftover < 0
+    ? { label: 'Negative cash flow', color: 'var(--red)', bg: 'var(--red-dim)', border: 'var(--red-border)' }
+    : pct < 10
+    ? { label: '⚠ Tight — aim for 20%+', color: 'var(--amber)', bg: 'var(--amber-dim)', border: 'var(--amber-border)' }
+    : pct < 20
+    ? { label: '✓ Good', color: 'var(--green)', bg: 'var(--green-dim)', border: 'var(--green-border)' }
+    : { label: '✓ Excellent', color: 'var(--green)', bg: 'var(--green-dim)', border: 'var(--green-border)' }
+
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-dim)', marginBottom: 10 }}>
+          Monthly Leftover
+        </div>
+        <div style={{ fontSize: 48, fontWeight: 800, color: leftover >= 0 ? 'var(--green)' : 'var(--red)', letterSpacing: '-2px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
+          {fmt(leftover)}
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+          {fmtPct(Math.abs(pct))} of income {leftover >= 0 ? 'saved after bills' : 'over budget'}
+        </div>
+      </div>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>
+          <span>Bills {fmt(totalBills)}</span>
+          <span>Income {fmt(monthlyIncome)}</span>
+        </div>
+        <div className="prog-track" style={{ height: 5, marginBottom: 14 }}>
+          <div className="prog-fill" style={{ width: `${billsPct}%`, background: leftover >= 0 ? 'var(--blue)' : 'var(--red)' }} />
+        </div>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', padding: '5px 12px', borderRadius: 99,
+          background: status.bg, border: `1px solid ${status.border}`,
+          fontSize: 12, fontWeight: 600, color: status.color,
+        }}>
+          {status.label}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function IncomeCard({ monthlyIncome, sources, pctCommitted }) {
+  const barColor = pctCommitted > 90 ? 'var(--red)' : pctCommitted > 75 ? 'var(--amber)' : 'var(--green)'
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-dim)', marginBottom: 10 }}>
+          Monthly Income
+        </div>
+        <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--green)', letterSpacing: '-1px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
+          {fmt(monthlyIncome)}
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+          {sources.length} source{sources.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>
+          <span>{fmtPct(pctCommitted)} committed</span>
+          <span>{fmtPct(100 - pctCommitted)} free</span>
+        </div>
+        <div className="prog-track" style={{ height: 5 }}>
+          <div className="prog-fill" style={{ width: `${Math.min(100, pctCommitted)}%`, background: barColor }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BillsCard({ totalBills, paidAmt, allBills, checks }) {
+  const paidCount = allBills.filter((b) => checks[b.id]).length
+  const pct = totalBills > 0 ? Math.min(100, (paidAmt / totalBills) * 100) : 0
+  const remaining = Math.max(0, totalBills - paidAmt)
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-dim)', marginBottom: 10 }}>
+          Bills This Month
+        </div>
+        <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text)', letterSpacing: '-1px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
+          {fmt(totalBills)}
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+          {allBills.length} bills total
+        </div>
+      </div>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>
+          <span style={{ color: 'var(--green)' }}>{fmt(paidAmt)} paid</span>
+          <span style={{ color: remaining > 0 ? 'var(--amber)' : 'var(--text-dim)' }}>{fmt(remaining)} left</span>
+        </div>
+        <div className="prog-track" style={{ height: 5, marginBottom: 10 }}>
+          <div className="prog-fill" style={{ width: `${pct}%`, background: pct >= 100 ? 'var(--green)' : 'var(--blue)' }} />
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+          {paidCount} of {allBills.length} bills marked paid
+        </div>
+      </div>
+    </div>
+  )
 }
