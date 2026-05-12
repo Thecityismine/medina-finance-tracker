@@ -127,41 +127,41 @@ export default function Dashboard() {
         <KPICard
           label="Monthly Income"
           value={fmt(monthlyIncome)}
-          sub={`${incomeSources.length} paycheck sources`}
+          sub={`${incomeSources.length} source${incomeSources.length !== 1 ? 's' : ''} · ${fmtPct(totalBills / monthlyIncome * 100)} committed`}
           icon={<DollarSign size={16} />}
           color="var(--green)"
         />
         <KPICard
           label="Bills This Month"
           value={fmt(totalBills)}
-          sub={`${allBills.length} bills`}
+          sub={`${allBills.length} bills · ${allBills.filter(b => checks[b.id]).length} paid so far`}
           icon={<Receipt size={16} />}
         />
         <KPICard
           label="Monthly Leftover"
           value={fmt(leftover)}
-          sub={leftover < 0 ? 'In the red!' : fmtPct(leftover / monthlyIncome * 100) + ' of income'}
+          sub={leftover < 0 ? '⚠ Spending exceeds income' : `${fmtPct(leftover / monthlyIncome * 100)} of income saved`}
           color={leftover >= 0 ? 'var(--green)' : 'var(--red)'}
           icon={<CheckCircle2 size={16} />}
         />
         <KPICard
           label="Total Debt"
           value={fmt(totalDebt)}
-          sub={`${creditCards.length} cards + ${loans.length} loans`}
+          sub={`${creditCards.length} card${creditCards.length !== 1 ? 's' : ''} · ${loans.length} loan${loans.length !== 1 ? 's' : ''}`}
           color="var(--red)"
           icon={<TrendingDown size={16} />}
         />
         <KPICard
           label="Credit Utilization"
           value={fmtPct(utilPct)}
-          sub={utilPct > 70 ? '⚠ Critical' : utilPct > 30 ? '⚠ High' : '✓ Healthy'}
+          sub={utilPct > 70 ? '↓ Aim below 30% urgently' : utilPct > 30 ? '↓ Aim below 30% for best score' : '↑ Healthy — keep it up'}
           color={utilPct > 70 ? 'var(--red)' : utilPct > 30 ? 'var(--amber)' : 'var(--green)'}
           icon={<CreditCard size={16} />}
         />
         <KPICard
           label="Monthly Subs"
           value={fmt(monthlySubs)}
-          sub={`${fmt(annualSubs)}/year`}
+          sub={`${fmt(annualSubs)}/year across ${subscriptions.length} service${subscriptions.length !== 1 ? 's' : ''}`}
           icon={<Zap size={16} />}
         />
         {nextCheck && (

@@ -1,27 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0a0a0a;
-  --surface: #141414;
-  --surface-2: #1e1e1e;
-  --surface-3: #262626;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --text: #f0f0f0;
-  --text-muted: #9ca3af;
-  --text-dim: #6b7280;
-  --green: #4ade80;
-  --green-dim: rgba(74, 222, 128, 0.1);
-  --green-border: rgba(74, 222, 128, 0.25);
-  --red: #ef4444;
-  --red-dim: rgba(239, 68, 68, 0.1);
-  --red-border: rgba(239, 68, 68, 0.25);
+  --bg: #000000;
+  --surface: #111113;
+  --surface-2: #1c1c1e;
+  --surface-3: #2c2c2e;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.11);
+  --text: #ffffff;
+  --text-muted: #8e8e93;
+  --text-dim: #636366;
+  --green: #34d399;
+  --green-dim: rgba(52, 211, 153, 0.12);
+  --green-border: rgba(52, 211, 153, 0.28);
+  --red: #f87171;
+  --red-dim: rgba(248, 113, 113, 0.12);
+  --red-border: rgba(248, 113, 113, 0.28);
   --amber: #fbbf24;
-  --amber-dim: rgba(251, 191, 36, 0.1);
-  --amber-border: rgba(251, 191, 36, 0.25);
+  --amber-dim: rgba(251, 191, 36, 0.12);
+  --amber-border: rgba(251, 191, 36, 0.28);
   --blue: #60a5fa;
-  --blue-dim: rgba(96, 165, 250, 0.1);
-  --blue-border: rgba(96, 165, 250, 0.25);
+  --blue-dim: rgba(96, 165, 250, 0.12);
+  --blue-border: rgba(96, 165, 250, 0.28);
+  --card-bg: linear-gradient(180deg, #161618 0%, #0c0c0e 100%);
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
   --sidebar-w: 240px;
 }
 
@@ -40,7 +42,9 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  letter-spacing: -0.01em;
 }
 
 /* Tabular numbers for financial data */
@@ -57,26 +61,27 @@ body {
 
 /* Card */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: var(--card-shadow);
 }
 
 /* Input */
 .inp {
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--text);
-  padding: 8px 12px;
+  padding: 10px 14px;
   font-size: 14px;
   font-family: 'Inter', system-ui, sans-serif;
   outline: none;
   width: 100%;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s;
 }
-.inp:focus { border-color: var(--green-border); }
+.inp:focus { border-color: var(--green-border); box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.08); }
 .inp::placeholder { color: var(--text-dim); }
 
 /* Select */
@@ -109,7 +114,7 @@ select.inp option {
 .btn-ghost:hover { border-color: var(--border-strong); opacity: 1; background: var(--surface-3); }
 .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-border); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
-.btn-icon { padding: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; }
+.btn-icon { padding: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); border-radius: 10px; }
 .btn-icon:hover { border-color: var(--border-strong); color: var(--text); opacity: 1; background: var(--surface-3); }
 
 /* Progress bar */
@@ -157,9 +162,10 @@ select.inp option {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.72);
   z-index: 40;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* Checkbox */
