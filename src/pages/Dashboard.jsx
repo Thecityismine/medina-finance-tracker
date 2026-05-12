@@ -358,7 +358,7 @@ function LeftoverHeroCard({ leftover, monthlyIncome, totalBills }) {
         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-dim)', marginBottom: 10 }}>
           Monthly Leftover
         </div>
-        <div style={{ fontSize: 48, fontWeight: 800, color: leftover >= 0 ? 'var(--green)' : 'var(--red)', letterSpacing: '-2px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ fontSize: 26, fontWeight: 700, color: leftover >= 0 ? 'var(--green)' : 'var(--red)', letterSpacing: '-0.5px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
           {fmt(leftover)}
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
@@ -393,7 +393,7 @@ function IncomeCard({ monthlyIncome, sources, pctCommitted }) {
         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-dim)', marginBottom: 10 }}>
           Monthly Income
         </div>
-        <div style={{ fontSize: 48, fontWeight: 800, color: 'var(--green)', letterSpacing: '-2px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--green)', letterSpacing: '-0.5px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
           {fmt(monthlyIncome)}
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
@@ -423,7 +423,7 @@ function BillsCard({ totalBills, paidAmt, allBills, checks }) {
         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-dim)', marginBottom: 10 }}>
           Bills This Month
         </div>
-        <div style={{ fontSize: 48, fontWeight: 800, color: 'var(--text)', letterSpacing: '-2px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px', lineHeight: 1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>
           {fmt(totalBills)}
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
