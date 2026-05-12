@@ -6,7 +6,7 @@ import Modal from '../components/ui/Modal'
 import { FormRow, ModalFooter } from '../components/ui/Modal'
 import KPICard from '../components/ui/KPICard'
 import { fmt, daysUntilDue } from '../utils/calculations'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, ChevronDown, ChevronUp } from 'lucide-react'
 
 const FILTERS = ['All', 'Autopay', 'Manual', 'Credit Cards', 'Rent', 'Utilities', 'Jorge', 'Anseli']
 
@@ -24,6 +24,7 @@ export default function Bills() {
   const [showAdd, setShowAdd] = useState(false)
   const [editBill, setEditBill] = useState(null)
   const [form, setForm] = useState(defaultForm())
+  const [showZero, setShowZero] = useState(false)
 
   const activeBills = bills.filter((b) => b.active !== false)
 
@@ -168,39 +169,74 @@ export default function Bills() {
       </div>
 
       {/* Table */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th onClick={() => sort('name')}>Name{sortIcon('name')}</th>
-                <th onClick={() => sort('category')}>Category{sortIcon('category')}</th>
-                <th onClick={() => sort('dueDate')}>Due{sortIcon('dueDate')}</th>
-                <th onClick={() => sort('amount')}>Amount{sortIcon('amount')}</th>
-                <th onClick={() => sort('paidBy')}>Owner{sortIcon('paidBy')}</th>
-                <th>Autopay</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBills.map((bill) => (
-                <BillRow
-                  key={bill.id}
-                  bill={bill}
-                  onClick={() => setSelectedBill(bill)}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </tbody>
-          </table>
-          {filteredBills.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)', fontSize: 13 }}>
-              No bills match this filter
+      {(() => {
+        const activeBillsFiltered = filteredBills.filter((b) => Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0) > 0)
+        const zeroBills = filteredBills.filter((b) => Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0) === 0)
+        return (
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th onClick={() => sort('name')}>Name{sortIcon('name')}</th>
+                    <th onClick={() => sort('category')}>Category{sortIcon('category')}</th>
+                    <th onClick={() => sort('dueDate')}>Due{sortIcon('dueDate')}</th>
+                    <th onClick={() => sort('amount')}>Amount{sortIcon('amount')}</th>
+                    <th onClick={() => sort('paidBy')}>Owner{sortIcon('paidBy')}</th>
+                    <th>Autopay</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeBillsFiltered.map((bill) => (
+                    <BillRow
+                      key={bill.id}
+                      bill={bill}
+                      onClick={() => setSelectedBill(bill)}
+                      onEdit={openEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                  {showZero && zeroBills.map((bill) => (
+                    <BillRow
+                      key={bill.id}
+                      bill={bill}
+                      onClick={() => setSelectedBill(bill)}
+                      onEdit={openEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </tbody>
+              </table>
+              {activeBillsFiltered.length === 0 && zeroBills.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)', fontSize: 13 }}>
+                  No bills match this filter
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+
+            {zeroBills.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--border)' }}>
+                <button
+                  onClick={() => setShowZero(!showZero)}
+                  style={{
+                    width: '100%', padding: '12px 16px', background: 'transparent',
+                    border: 'none', cursor: 'pointer', color: 'var(--text-dim)',
+                    fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 6, fontFamily: 'inherit',
+                    transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-dim)'}
+                >
+                  {showZero ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  {showZero ? 'Hide' : 'Show'} $0 bills ({zeroBills.length})
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Bill Detail Drawer */}
       <BillDrawer
