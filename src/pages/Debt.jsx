@@ -363,7 +363,7 @@ export default function Debt() {
       {/* Add/Edit Card Modal */}
       <Modal open={showAddCard || !!editCard} onClose={() => { setShowAddCard(false); setEditCard(null) }} title={editCard ? 'Edit Card' : 'Add Credit Card'}>
         <FormRow label="Card Name"><input className="inp" value={cardForm.name || ''} onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })} placeholder="Chase Sapphire" /></FormRow>
-        <FormRow label="Account Number (last 4 digits)"><input className="inp" value={cardForm.accountNumber || ''} onChange={(e) => setCardForm({ ...cardForm, accountNumber: e.target.value })} placeholder="e.g. 4521" maxLength={20} /></FormRow>
+        <FormRow label="Account Number"><input className="inp" value={cardForm.accountNumber || ''} onChange={(e) => { const raw = e.target.value.replace(/\s/g, ''); const formatted = raw.replace(/(.{4})(?=.)/g, '$1 '); setCardForm({ ...cardForm, accountNumber: formatted }) }} placeholder="e.g. 4400 6663 7424 7522" maxLength={24} /></FormRow>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormRow label="Balance ($)"><input className="inp" type="number" value={cardForm.balance || ''} onChange={(e) => setCardForm({ ...cardForm, balance: e.target.value })} /></FormRow>
           <FormRow label="Credit Limit ($)"><input className="inp" type="number" value={cardForm.creditLimit || ''} onChange={(e) => setCardForm({ ...cardForm, creditLimit: e.target.value })} /></FormRow>
