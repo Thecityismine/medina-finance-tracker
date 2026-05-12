@@ -5,19 +5,16 @@ import BillDrawer from '../components/bills/BillDrawer'
 import Modal from '../components/ui/Modal'
 import { FormRow, ModalFooter } from '../components/ui/Modal'
 import KPICard from '../components/ui/KPICard'
-import { fmt, daysUntilDue, billStatus, today } from '../utils/calculations'
-import { Plus, Search, SlidersHorizontal } from 'lucide-react'
+import { fmt, daysUntilDue } from '../utils/calculations'
+import { Plus, Search } from 'lucide-react'
 
-const FILTERS = ['All', 'Due Soon', 'Unpaid', 'Paid', 'Overdue', 'Autopay', 'Manual', 'Credit Cards', 'Rent', 'Utilities', 'Jorge', 'Anseli']
+const FILTERS = ['All', 'Autopay', 'Manual', 'Credit Cards', 'Rent', 'Utilities', 'Jorge', 'Anseli']
 
 const CATEGORIES = ['Rent', 'Credit Card', 'Utility', 'Personal', 'Loan', 'Investment', 'Subscription']
 const OWNERS = ['Jorge', 'Anseli']
 
 export default function Bills() {
-  const { bills, addBill, updateBill, deleteBill, monthlyChecks, toggleBillPaid } = useFinance()
-  const { year, month } = today()
-  const checksKey = `${year}-${month}`
-  const checks = monthlyChecks[checksKey] ?? {}
+  const { bills, addBill, updateBill, deleteBill } = useFinance()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('All')
@@ -39,20 +36,16 @@ export default function Bills() {
     }
 
     switch (filter) {
-      case 'Paid':     list = list.filter((b) => checks[b.id]); break
-      case 'Unpaid':   list = list.filter((b) => !checks[b.id]); break
-      case 'Due Soon': list = list.filter((b) => { const d = daysUntilDue(b.dueDate ?? b.due_date); return d >= 0 && d <= 7 && !checks[b.id] }); break
-      case 'Overdue':  list = list.filter((b) => billStatus(b.dueDate ?? b.due_date, checks[b.id]) === 'overdue'); break
-      case 'Autopay':  list = list.filter((b) => b.autopay); break
-      case 'Manual':   list = list.filter((b) => !b.autopay); break
+      case 'Autopay':      list = list.filter((b) => b.autopay); break
+      case 'Manual':       list = list.filter((b) => !b.autopay); break
       case 'Credit Cards': list = list.filter((b) => b.category === 'Credit Card'); break
-      case 'Rent':     list = list.filter((b) => b.category === 'Rent'); break
-      case 'Utilities': list = list.filter((b) => b.category === 'Utility'); break
-      case 'Jorge':    list = list.filter((b) => (b.paidBy ?? b.paid_by) === 'Jorge'); break
-      case 'Anseli':   list = list.filter((b) => (b.paidBy ?? b.paid_by) === 'Anseli'); break
+      case 'Rent':         list = list.filter((b) => b.category === 'Rent'); break
+      case 'Utilities':    list = list.filter((b) => b.category === 'Utility'); break
+      case 'Jorge':        list = list.filter((b) => (b.paidBy ?? b.paid_by) === 'Jorge'); break
+      case 'Anseli':       list = list.filter((b) => (b.paidBy ?? b.paid_by) === 'Anseli'); break
     }
 
-    list = [...list].sort((a, b) => {
+    return [...list].sort((a, b) => {
       let av = a[sortKey] ?? a[snakeCase(sortKey)] ?? ''
       let bv = b[sortKey] ?? b[snakeCase(sortKey)] ?? ''
       if (typeof av === 'string') av = av.toLowerCase()
@@ -60,25 +53,19 @@ export default function Bills() {
       const dir = sortDir === 'asc' ? 1 : -1
       return av < bv ? -dir : av > bv ? dir : 0
     })
-
-    return list
-  }, [activeBills, search, filter, sortKey, sortDir, checks])
+  }, [activeBills, search, filter, sortKey, sortDir])
 
   const summary = useMemo(() => {
-    const paid = activeBills.filter((b) => checks[b.id]).length
-    const total = activeBills.length
-    const dueSoon = activeBills.filter((b) => { const d = daysUntilDue(b.dueDate ?? b.due_date); return d >= 0 && d <= 7 && !checks[b.id] }).length
-    const autopay = activeBills.filter((b) => b.autopay).length
     const totalAmt = activeBills.reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0), 0)
-    const paidAmt = activeBills.filter((b) => checks[b.id]).reduce((s, b) => s + Number(b.amount ?? b.defaultAmount ?? b.default_amount ?? 0), 0)
-    return { paid, total, dueSoon, autopay, totalAmt, paidAmt }
-  }, [activeBills, checks])
+    const autopay = activeBills.filter((b) => b.autopay).length
+    const dueSoon = activeBills.filter((b) => { const d = daysUntilDue(b.dueDate ?? b.due_date); return d >= 0 && d <= 7 }).length
+    return { totalAmt, autopay, dueSoon, total: activeBills.length }
+  }, [activeBills])
 
   const sort = (key) => {
     if (sortKey === key) setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
     else { setSortKey(key); setSortDir('asc') }
   }
-
   const sortIcon = (key) => sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''
 
   const openAdd = () => { setForm(defaultForm()); setShowAdd(true) }
@@ -90,7 +77,7 @@ export default function Bills() {
       amount: bill.amount ?? bill.defaultAmount ?? bill.default_amount ?? '',
       dueDate: bill.dueDate ?? bill.due_date ?? '',
       category: bill.category ?? 'Utility',
-      paidBy: bill.paidBy ?? 'Jorge',
+      paidBy: bill.paidBy ?? bill.paid_by ?? 'Jorge',
       accountName: bill.accountName ?? '',
       autopay: !!bill.autopay,
       varies: !!bill.varies,
@@ -111,13 +98,8 @@ export default function Bills() {
       recurring: true,
     }
     try {
-      if (editBill) {
-        await updateBill(editBill.id, data)
-        setEditBill(null)
-      } else {
-        await addBill(data)
-        setShowAdd(false)
-      }
+      if (editBill) { await updateBill(editBill.id, data); setEditBill(null) }
+      else { await addBill(data); setShowAdd(false) }
     } catch (e) {
       alert(`Save failed: ${e.message}`)
     }
@@ -134,7 +116,7 @@ export default function Bills() {
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px', color: 'var(--text)' }}>Bills</h1>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-            All recurring monthly expenses
+            Manage recurring monthly expenses — mark paid on Monthly Plan
           </div>
         </div>
         <button className="btn btn-green" onClick={openAdd}>
@@ -143,13 +125,12 @@ export default function Bills() {
       </div>
 
       {/* KPI row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
         <KPICard label="Total Monthly" value={fmt(summary.totalAmt)} />
-        <KPICard label="Bills Paid" value={`${summary.paid}/${summary.total}`} color="var(--green)" />
-        <KPICard label="Remaining" value={fmt(summary.totalAmt - summary.paidAmt)} color="var(--amber)" />
-        <KPICard label="Due Next 7 Days" value={`${summary.dueSoon}`} color={summary.dueSoon > 0 ? 'var(--amber)' : 'var(--text)'} />
+        <KPICard label="Total Bills" value={`${summary.total}`} />
         <KPICard label="Autopay" value={`${summary.autopay}`} color="var(--green)" />
         <KPICard label="Manual" value={`${summary.total - summary.autopay}`} />
+        <KPICard label="Due Next 7 Days" value={`${summary.dueSoon}`} color={summary.dueSoon > 0 ? 'var(--amber)' : 'var(--text)'} />
       </div>
 
       {/* Search + filters */}
@@ -172,12 +153,8 @@ export default function Bills() {
               key={f}
               onClick={() => setFilter(f)}
               style={{
-                padding: '4px 12px',
-                borderRadius: 99,
-                fontSize: 12,
-                fontWeight: filter === f ? 600 : 400,
-                border: '1px solid',
-                cursor: 'pointer',
+                padding: '4px 12px', borderRadius: 99, fontSize: 12,
+                fontWeight: filter === f ? 600 : 400, border: '1px solid', cursor: 'pointer',
                 background: filter === f ? 'var(--green-dim)' : 'transparent',
                 borderColor: filter === f ? 'var(--green-border)' : 'var(--border)',
                 color: filter === f ? 'var(--green)' : 'var(--text-muted)',
@@ -196,14 +173,12 @@ export default function Bills() {
           <table className="tbl">
             <thead>
               <tr>
-                <th style={{ width: 36 }} />
                 <th onClick={() => sort('name')}>Name{sortIcon('name')}</th>
                 <th onClick={() => sort('category')}>Category{sortIcon('category')}</th>
                 <th onClick={() => sort('dueDate')}>Due{sortIcon('dueDate')}</th>
                 <th onClick={() => sort('amount')}>Amount{sortIcon('amount')}</th>
                 <th onClick={() => sort('paidBy')}>Owner{sortIcon('paidBy')}</th>
                 <th>Autopay</th>
-                <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
@@ -212,7 +187,6 @@ export default function Bills() {
                 <BillRow
                   key={bill.id}
                   bill={bill}
-                  paid={!!checks[bill.id]}
                   onClick={() => setSelectedBill(bill)}
                   onEdit={openEdit}
                   onDelete={handleDelete}
@@ -231,10 +205,9 @@ export default function Bills() {
       {/* Bill Detail Drawer */}
       <BillDrawer
         bill={selectedBill}
-        paid={selectedBill ? !!checks[selectedBill.id] : false}
+        paid={false}
         onClose={() => setSelectedBill(null)}
         onEdit={openEdit}
-        onTogglePaid={(id) => toggleBillPaid(id, year, month)}
       />
 
       {/* Add/Edit Modal */}
