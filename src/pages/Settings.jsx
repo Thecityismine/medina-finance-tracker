@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useFinance } from '../context/FinanceContext'
 import { fmt } from '../utils/calculations'
 import { seedFirestore, isFirestoreEmpty } from '../utils/seedData'
-import { Edit2, Save, X, Download, Upload, Database, Check } from 'lucide-react'
+import { Edit2, Save, X, Download, Upload, Database, Check, Plus, Tag } from 'lucide-react'
 import { collection, getDocs, doc, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 
@@ -10,6 +10,9 @@ export default function Settings() {
   const { incomeSources, updateIncomeSource, appSettings, updateSettings } = useFinance()
 
   const [editIncome, setEditIncome] = useState(null)
+  const [newSubCategory, setNewSubCategory] = useState('')
+  const [subCatSaving, setSubCatSaving] = useState(false)
+  const [subCatError, setSubCatError] = useState('')
   const [incomeForm, setIncomeForm] = useState({})
   const [saveError, setSaveError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -42,6 +45,34 @@ export default function Settings() {
       setSaveError(`Save failed: ${e.message}`)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const subCategories = appSettings?.subscriptionCategories ?? []
+
+  const addSubCategory = async () => {
+    const name = newSubCategory.trim()
+    if (!name) return
+    if (subCategories.includes(name)) {
+      setSubCatError('Category already exists')
+      return
+    }
+    setSubCatSaving(true)
+    setSubCatError('')
+    try {
+      await updateSettings({ subscriptionCategories: [...subCategories, name] })
+      setNewSubCategory('')
+    } catch (e) {
+      setSubCatError(`Failed: ${e.message}`)
+    }
+    setSubCatSaving(false)
+  }
+
+  const removeSubCategory = async (cat) => {
+    try {
+      await updateSettings({ subscriptionCategories: subCategories.filter((c) => c !== cat) })
+    } catch (e) {
+      alert(`Remove failed: ${e.message}`)
     }
   }
 
@@ -237,24 +268,89 @@ export default function Settings() {
         ))}
       </Section>
 
-      {/* Categories */}
+      {/* Bill Categories (read-only) */}
       <Section title="Bill Categories">
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {(appSettings?.categories ?? []).map((cat) => (
             <div key={cat} style={{
-              padding: '6px 14px',
-              borderRadius: 99,
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              fontSize: 13,
-              color: 'var(--text-muted)',
+              padding: '6px 14px', borderRadius: 99,
+              background: 'var(--surface-2)', border: '1px solid var(--border)',
+              fontSize: 13, color: 'var(--text-muted)',
             }}>
               {cat}
             </div>
           ))}
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 10 }}>
-          Categories are managed globally. Add custom categories here.
+          Used for bills and expenses.
+        </div>
+      </Section>
+
+      {/* Subscription Categories */}
+      <Section title="Subscription Categories">
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
+          These categories appear in the Subscriptions page. Add your own or remove ones you don't use.
+        </div>
+
+        {/* Existing category chips */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {subCategories.map((cat) => (
+            <div
+              key={cat}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '5px 10px 5px 12px', borderRadius: 99,
+                background: 'var(--surface-2)', border: '1px solid var(--border)',
+                fontSize: 13, color: 'var(--text-muted)',
+              }}
+            >
+              <Tag size={11} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
+              <span>{cat}</span>
+              <button
+                onClick={() => removeSubCategory(cat)}
+                title={`Remove "${cat}"`}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--text-dim)', padding: '1px 2px',
+                  display: 'flex', alignItems: 'center',
+                  borderRadius: 4,
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--red)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+          {subCategories.length === 0 && (
+            <div style={{ fontSize: 13, color: 'var(--text-dim)' }}>No categories yet.</div>
+          )}
+        </div>
+
+        {/* Add new category */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <input
+              className="inp"
+              placeholder="New category name…"
+              value={newSubCategory}
+              onChange={(e) => { setNewSubCategory(e.target.value); setSubCatError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && addSubCategory()}
+              style={{ fontSize: 14 }}
+            />
+            {subCatError && (
+              <div style={{ fontSize: 12, color: 'var(--red)', marginTop: 6 }}>{subCatError}</div>
+            )}
+          </div>
+          <button
+            className="btn btn-green"
+            onClick={addSubCategory}
+            disabled={subCatSaving || !newSubCategory.trim()}
+            style={{ opacity: subCatSaving || !newSubCategory.trim() ? 0.5 : 1, flexShrink: 0 }}
+          >
+            <Plus size={14} /> {subCatSaving ? 'Adding…' : 'Add'}
+          </button>
         </div>
       </Section>
 

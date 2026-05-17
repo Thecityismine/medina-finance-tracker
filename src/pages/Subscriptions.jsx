@@ -140,7 +140,11 @@ const CHIP = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Subscriptions() {
-  const { subscriptions, addSubscription, updateSubscription, deleteSubscription } = useFinance()
+  const { subscriptions, addSubscription, updateSubscription, deleteSubscription, appSettings } = useFinance()
+  // Use categories from Firestore settings, falling back to the hardcoded defaults
+  const categories = appSettings?.subscriptionCategories?.length > 0
+    ? appSettings.subscriptionCategories
+    : SUBSCRIPTION_CATEGORIES
 
   const [filters, setFilters] = useState(loadFilters)
   const [sortKey, setSortKey] = useState('nextBillingDate')
@@ -529,7 +533,7 @@ export default function Subscriptions() {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <select className="inp" style={{ flex: '0 1 150px', fontSize: 13, padding: '7px 10px' }} value={filters.category} onChange={(e) => setFilter('category', e.target.value)}>
                 <option value="All">Category</option>
-                {SUBSCRIPTION_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                {categories.map((c) => <option key={c}>{c}</option>)}
               </select>
 
               <select className="inp" style={{ flex: '0 1 130px', fontSize: 13, padding: '7px 10px' }} value={filters.freq} onChange={(e) => setFilter('freq', e.target.value)}>
@@ -689,7 +693,7 @@ export default function Subscriptions() {
           <FormRow label="Category">
             <select className="inp" value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               <option value="">Select category…</option>
-              {SUBSCRIPTION_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              {categories.map((c) => <option key={c}>{c}</option>)}
             </select>
           </FormRow>
           <FormRow label="Owner">

@@ -19,6 +19,12 @@ export function FinanceProvider({ children }) {
   const [appSettings, setAppSettings] = useState({
     payoffMethod: 'avalanche',
     categories: ['Rent', 'Credit Card', 'Utility', 'Personal', 'Loan', 'Investment', 'Subscription'],
+    subscriptionCategories: [
+      'Software & AI', 'Streaming', 'Insurance', 'Fitness', 'Cloud & Hosting',
+      'Domain & Website', 'Security & Privacy', 'Productivity', 'Automotive',
+      'Home Services', 'Kids & Gaming', 'Storage & Backup', 'Professional Tools',
+      'Utilities', 'Other',
+    ],
     owners: ['Jorge', 'Anseli'],
   })
   const [loading, setLoading] = useState(true)
