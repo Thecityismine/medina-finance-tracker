@@ -26,7 +26,7 @@ const PRICE_RANGES = [
   { label: 'Over $100',  min: 100, max: Infinity },
 ]
 
-const RENEWAL_OPTIONS = ['This Month', 'Next 30 Days', 'Next 90 Days', 'This Year']
+const RENEWAL_OPTIONS = ['This Month', 'Next 30 Days', 'Next 90 Days', 'This Year', 'Next 12 Months', 'Next 2 Years']
 const GROUP_BY_OPTIONS = ['None', 'Category', 'Frequency', 'Payment Method', 'Owner']
 const FILTER_KEY = 'subscriptionFilters'
 
@@ -66,8 +66,27 @@ function annualCost(sub) {
     case 'Quarterly': return amt * 4
     case '6 Months':  return amt * 2
     case 'Yearly':    return amt
+    case '2 Years':   return amt / 2
+    case '3 Years':   return amt / 3
+    case '5 Years':   return amt / 5
     default:          return amt * 12
   }
+}
+
+function formatTimeUntil(days) {
+  if (days === 0) return 'Today'
+  if (days < 0) return 'Overdue'
+  if (days < 60) return `In ${days} day${days !== 1 ? 's' : ''}`
+  const months = Math.round(days / 30.44)
+  if (months < 24) return `In ${months} month${months !== 1 ? 's' : ''}`
+  const years = (days / 365.25).toFixed(1)
+  return `In ${years} yr${parseFloat(years) !== 1 ? 's' : ''}`
+}
+
+function fmtContractAddr(addr) {
+  if (!addr) return null
+  if (addr.length <= 12) return addr
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
 function monthlyEquivalent(sub) { return annualCost(sub) / 12 }
@@ -106,6 +125,8 @@ function matchesRenewal(sub, renewal) {
   if (renewal === 'Next 30 Days') return diff >= 0 && diff <= 30
   if (renewal === 'Next 90 Days') return diff >= 0 && diff <= 90
   if (renewal === 'This Year') return date.getFullYear() === now.getFullYear()
+  if (renewal === 'Next 12 Months') return diff >= 0 && diff <= 365
+  if (renewal === 'Next 2 Years') return diff >= 0 && diff <= 730
   return true
 }
 
@@ -124,7 +145,7 @@ function CategoryBadge({ category }) {
 }
 
 function defaultForm() {
-  return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', category: '', nextBillingDate: '', paymentMethod: '', payPeriod: '' }
+  return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', category: '', nextBillingDate: '', paymentMethod: '', payPeriod: '', contractAddress: '' }
 }
 
 const CHIP = {
@@ -259,6 +280,7 @@ export default function Subscriptions() {
       nextBillingDate: sub.nextBillingDate ?? '',
       paymentMethod: sub.paymentMethod ?? '',
       payPeriod: sub.payPeriod ?? '',
+      contractAddress: sub.contractAddress ?? '',
     })
   }
 
@@ -270,6 +292,7 @@ export default function Subscriptions() {
       nextBillingDate: form.nextBillingDate || null,
       paymentMethod: form.paymentMethod || '',
       payPeriod: form.payPeriod ? Number(form.payPeriod) : null,
+      contractAddress: form.contractAddress || '',
     }
     try {
       if (editSub) { await updateSubscription(editSub.id, data); setEditSub(null) }
@@ -295,30 +318,57 @@ export default function Subscriptions() {
         <th onClick={() => sort('amount')}>Amount{sortIcon('amount')}</th>
         <th>Annual Cost</th>
         <th>Payment Method</th>
+        <th>Contract</th>
         <th onClick={() => sort('owner')}>Owner{sortIcon('owner')}</th>
         <th style={{ textAlign: 'right' }}>Actions</th>
       </tr>
     </thead>
   )
 
-  const SubRow = ({ sub }) => (
-    <tr>
-      <td><div style={{ fontWeight: 500, color: 'var(--text)' }}>{sub.name}</div></td>
-      <td><CategoryBadge category={sub.category} /></td>
-      <td><Badge variant={sub.frequency?.toLowerCase()} label={sub.frequency} size="sm" /></td>
-      <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.nextBillingDate ?? '—'}</span></td>
-      <td><span style={{ fontWeight: 600 }}>{fmt(sub.amount)}</span></td>
-      <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmt(annualCost(sub))}/yr</span></td>
-      <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.paymentMethod || '—'}</span></td>
-      <td><Badge variant={sub.owner?.toLowerCase()} label={sub.owner} size="sm" /></td>
-      <td>
-        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-          <button className="btn-icon btn-sm" onClick={() => openEdit(sub)}><Edit2 size={13} /></button>
-          <button className="btn-icon btn-sm" style={{ color: 'var(--red)' }} onClick={() => handleDelete(sub)}><Trash2 size={13} /></button>
-        </div>
-      </td>
-    </tr>
-  )
+  const SubRow = ({ sub }) => {
+    const now = new Date()
+    const billingDays = sub.nextBillingDate
+      ? Math.ceil((new Date(sub.nextBillingDate) - now) / 86400000)
+      : null
+    const isLongTerm = billingDays !== null && billingDays > 120
+    return (
+      <tr>
+        <td><div style={{ fontWeight: 500, color: 'var(--text)' }}>{sub.name}</div></td>
+        <td><CategoryBadge category={sub.category} /></td>
+        <td><Badge variant={sub.frequency?.toLowerCase()} label={sub.frequency} size="sm" /></td>
+        <td>
+          {sub.nextBillingDate ? (
+            <div>
+              <span style={{ fontSize: 12, color: isLongTerm ? 'var(--blue)' : 'var(--text-muted)' }}>{sub.nextBillingDate}</span>
+              {isLongTerm && (
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>{formatTimeUntil(billingDays)}</div>
+              )}
+            </div>
+          ) : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>—</span>}
+        </td>
+        <td><span style={{ fontWeight: 600 }}>{fmt(sub.amount)}</span></td>
+        <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmt(annualCost(sub))}/yr</span></td>
+        <td><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.paymentMethod || '—'}</span></td>
+        <td>
+          {sub.contractAddress ? (
+            <span
+              title={sub.contractAddress}
+              style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'monospace', cursor: 'default' }}
+            >
+              {fmtContractAddr(sub.contractAddress)}
+            </span>
+          ) : <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>—</span>}
+        </td>
+        <td><Badge variant={sub.owner?.toLowerCase()} label={sub.owner} size="sm" /></td>
+        <td>
+          <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+            <button className="btn-icon btn-sm" onClick={() => openEdit(sub)}><Edit2 size={13} /></button>
+            <button className="btn-icon btn-sm" style={{ color: 'var(--red)' }} onClick={() => handleDelete(sub)}><Trash2 size={13} /></button>
+          </div>
+        </td>
+      </tr>
+    )
+  }
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -390,7 +440,7 @@ export default function Subscriptions() {
                 {nr.name}
               </div>
               <div style={{ fontSize: 12, color: nr.days === 0 ? 'var(--amber)' : 'var(--text-muted)', lineHeight: 1.5 }}>
-                {nr.days === 0 ? 'Today' : `In ${nr.days} day${nr.days !== 1 ? 's' : ''}`} · {fmt(nr.amount)}
+                {formatTimeUntil(nr.days)} · {fmt(nr.amount)}
               </div>
               {nr.paymentMethod && (
                 <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{nr.paymentMethod}</div>
@@ -465,7 +515,7 @@ export default function Subscriptions() {
           {showFrequency ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span>Spending by Billing Frequency</span>
           <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-dim)' }}>
-            {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map(f =>
+            {['Monthly', 'Quarterly', '6 Months', 'Yearly', '2 Years', '3 Years', '5 Years'].map(f =>
               activeSubs.filter(s => s.frequency === f).length
             ).join(' · ')} subs
           </span>
@@ -473,7 +523,7 @@ export default function Subscriptions() {
 
         {showFrequency && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 10 }}>
-            {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map((freq) => {
+            {['Monthly', 'Quarterly', '6 Months', 'Yearly', '2 Years', '3 Years', '5 Years'].map((freq) => {
               const list = activeSubs.filter((s) => s.frequency === freq)
               const total = list.reduce((s, sub) => s + Number(sub.amount || 0), 0)
               const isActive = filters.freq === freq
@@ -538,7 +588,7 @@ export default function Subscriptions() {
 
               <select className="inp" style={{ flex: '0 1 130px', fontSize: 13, padding: '7px 10px' }} value={filters.freq} onChange={(e) => setFilter('freq', e.target.value)}>
                 <option value="All">Frequency</option>
-                {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map((f) => <option key={f}>{f}</option>)}
+                {['Monthly', 'Quarterly', '6 Months', 'Yearly', '2 Years', '3 Years', '5 Years'].map((f) => <option key={f}>{f}</option>)}
               </select>
 
               <select className="inp" style={{ flex: '0 1 110px', fontSize: 13, padding: '7px 10px' }} value={filters.owner} onChange={(e) => setFilter('owner', e.target.value)}>
@@ -609,7 +659,7 @@ export default function Subscriptions() {
                         onClick={() => toggleCollapse(groupName)}
                         style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.025)' }}
                       >
-                        <td colSpan={9} style={{ padding: '10px 12px' }}>
+                        <td colSpan={10} style={{ padding: '10px 12px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             {isCollapsed
                               ? <ChevronRight size={14} color="var(--text-dim)" />
@@ -688,6 +738,7 @@ export default function Subscriptions() {
           <FormRow label="Frequency">
             <select className="inp" value={form.frequency || 'Monthly'} onChange={(e) => setForm({ ...form, frequency: e.target.value })}>
               <option>Monthly</option><option>Quarterly</option><option>6 Months</option><option>Yearly</option>
+              <option>2 Years</option><option>3 Years</option><option>5 Years</option>
             </select>
           </FormRow>
           <FormRow label="Category">
@@ -714,6 +765,9 @@ export default function Subscriptions() {
         </div>
         <FormRow label="Payment Method">
           <input className="inp" value={form.paymentMethod || ''} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} placeholder="e.g. BOA Visa, AMEX, BOA Checking" />
+        </FormRow>
+        <FormRow label="Contract Address">
+          <input className="inp" value={form.contractAddress || ''} onChange={(e) => setForm({ ...form, contractAddress: e.target.value })} placeholder="0x… or contract identifier" style={{ fontFamily: 'monospace', fontSize: 13 }} />
         </FormRow>
         <ModalFooter>
           <button className="btn btn-ghost" onClick={() => { setShowAdd(false); setEditSub(null) }}>Cancel</button>
