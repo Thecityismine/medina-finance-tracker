@@ -5,7 +5,10 @@ import Badge from '../components/ui/Badge'
 import Modal from '../components/ui/Modal'
 import { FormRow, ModalFooter } from '../components/ui/Modal'
 import { fmt, daysUntilDue } from '../utils/calculations'
-import { Plus, Edit2, Trash2, Calendar, DollarSign, Search, X, ChevronDown, ChevronRight, Filter } from 'lucide-react'
+import {
+  Plus, Edit2, Trash2, Calendar, DollarSign, Search,
+  X, ChevronDown, ChevronRight, SlidersHorizontal,
+} from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -27,6 +30,15 @@ const RENEWAL_OPTIONS = ['This Month', 'Next 30 Days', 'Next 90 Days', 'This Yea
 const GROUP_BY_OPTIONS = ['None', 'Category', 'Frequency', 'Payment Method', 'Owner']
 const FILTER_KEY = 'subscriptionFilters'
 
+// Quick chips shown in the sticky bar (All is rendered separately)
+const QUICK_FILTERS = [
+  { label: 'Due Soon',  key: 'renewal',  value: 'Next 30 Days' },
+  { label: 'Monthly',   key: 'freq',     value: 'Monthly' },
+  { label: 'Yearly',    key: 'freq',     value: 'Yearly' },
+  { label: 'AI Tools',  key: 'category', value: 'Software & AI' },
+  { label: 'Insurance', key: 'category', value: 'Insurance' },
+]
+
 const CATEGORY_COLORS = {
   'Software & AI':      { bg: 'rgba(96,165,250,0.12)',   color: '#60a5fa', border: 'rgba(96,165,250,0.25)' },
   'Streaming':          { bg: 'rgba(251,191,36,0.12)',   color: '#fbbf24', border: 'rgba(251,191,36,0.25)' },
@@ -45,15 +57,6 @@ const CATEGORY_COLORS = {
   'Other':              { bg: 'rgba(100,116,139,0.12)', color: '#64748b', border: 'rgba(100,116,139,0.25)' },
 }
 
-const QUICK_FILTERS = [
-  { label: 'High Cost',  key: 'price',   value: 'Over $100' },
-  { label: 'Due Soon',   key: 'renewal', value: 'Next 30 Days' },
-  { label: 'Monthly',    key: 'freq',    value: 'Monthly' },
-  { label: 'Yearly',     key: 'freq',    value: 'Yearly' },
-  { label: 'AI Tools',   key: 'category', value: 'Software & AI' },
-  { label: 'Insurance',  key: 'category', value: 'Insurance' },
-]
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function annualCost(sub) {
@@ -68,6 +71,15 @@ function annualCost(sub) {
 }
 
 function monthlyEquivalent(sub) { return annualCost(sub) / 12 }
+
+// Abbreviated currency: $8,239 → $8.2K
+function fmtK(n) {
+  const v = n ?? 0
+  const abs = Math.abs(v)
+  if (abs >= 10000) return `$${Math.round(v / 1000)}K`
+  if (abs >= 1000)  return `$${(v / 1000).toFixed(1)}K`
+  return fmt(v)
+}
 
 function defaultFilters() {
   return { search: '', category: 'All', freq: 'All', payment: 'All', owner: 'All', renewal: 'All', price: 'All' }
@@ -115,6 +127,16 @@ function defaultForm() {
   return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', category: '', nextBillingDate: '', paymentMethod: '', payPeriod: '' }
 }
 
+const CHIP = {
+  base: {
+    padding: '5px 12px', borderRadius: 99, fontSize: 12, fontWeight: 500,
+    border: '1px solid', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+    transition: 'all 0.15s',
+  },
+  active: { background: 'var(--green-dim)', borderColor: 'var(--green-border)', color: 'var(--green)', fontWeight: 600 },
+  inactive: { background: 'transparent', borderColor: 'var(--border)', color: 'var(--text-muted)' },
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Subscriptions() {
@@ -125,6 +147,8 @@ export default function Subscriptions() {
   const [sortDir, setSortDir] = useState('asc')
   const [groupBy, setGroupBy] = useState('None')
   const [collapsed, setCollapsed] = useState({})
+  const [showFrequency, setShowFrequency] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [editSub, setEditSub] = useState(null)
   const [form, setForm] = useState(defaultForm())
@@ -142,6 +166,11 @@ export default function Subscriptions() {
     const set = new Set(activeSubs.map((s) => s.paymentMethod).filter(Boolean))
     return [...Array.from(set).sort()]
   }, [activeSubs])
+
+  // Count of advanced (dropdown) filters active — excludes quick chip keys
+  const advancedFilterCount = useMemo(() =>
+    ['owner', 'renewal', 'price'].filter((k) => filters[k] !== defaultFilters()[k]).length
+  , [filters])
 
   const filtered = useMemo(() => {
     let list = activeSubs
@@ -215,7 +244,6 @@ export default function Subscriptions() {
     else { setSortKey(key); setSortDir('asc') }
   }
   const sortIcon = (key) => sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''
-
   const toggleCollapse = (name) => setCollapsed((c) => ({ ...c, [name]: !c[name] }))
 
   const openEdit = (sub) => {
@@ -251,7 +279,7 @@ export default function Subscriptions() {
     if (confirm(`Delete "${sub.name}"?`)) await deleteSubscription(sub.id)
   }
 
-  // ─── Shared table header ──────────────────────────────────────────────────
+  // ─── Sub-components ──────────────────────────────────────────────────────────
 
   const TableHead = () => (
     <thead>
@@ -270,7 +298,7 @@ export default function Subscriptions() {
   )
 
   const SubRow = ({ sub }) => (
-    <tr key={sub.id}>
+    <tr>
       <td><div style={{ fontWeight: 500, color: 'var(--text)' }}>{sub.name}</div></td>
       <td><CategoryBadge category={sub.category} /></td>
       <td><Badge variant={sub.frequency?.toLowerCase()} label={sub.frequency} size="sm" /></td>
@@ -290,144 +318,252 @@ export default function Subscriptions() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
+  const nr = metrics.nextRenewal
+
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 80 }}>
 
-      {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px', color: 'var(--text)' }}>Subscriptions</h1>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-            {isFiltersActive(filters) ? `${filtered.length} of ${activeSubs.length} subscriptions` : `${activeSubs.length} recurring services & memberships`}
-          </div>
+      {/* ── 1. Header (no Add button) ── */}
+      <div style={{ marginBottom: 16 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px', color: 'var(--text)' }}>Subscriptions</h1>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
+          {isFiltersActive(filters)
+            ? `${filtered.length} of ${activeSubs.length} subscriptions`
+            : `${activeSubs.length} recurring services`}
         </div>
-        <button className="btn btn-green" onClick={() => { setForm(defaultForm()); setShowAdd(true) }}>
-          <Plus size={14} /> Add Subscription
-        </button>
       </div>
 
-      {/* ── KPI (reflects filtered set) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
-        <KPICard label="Annual Cost" value={fmt(metrics.annual)} color="var(--red)" icon={<DollarSign size={16} />} />
-        <KPICard label="Monthly Equivalent" value={fmt(metrics.monthly)} sub={`${metrics.count} subscription${metrics.count !== 1 ? 's' : ''}`} />
-        <KPICard label="Due in 30 Days" value={`${metrics.dueNext30}`} color={metrics.dueNext30 > 0 ? 'var(--amber)' : undefined} />
-        {metrics.nextRenewal && (
-          <KPICard
-            label="Next Renewal"
-            value={metrics.nextRenewal.name}
-            sub={`In ${metrics.nextRenewal.days} days · ${fmt(metrics.nextRenewal.amount)}`}
-            icon={<Calendar size={16} />}
-          />
+      {/* ── 2. Search bar ── */}
+      <div style={{ position: 'relative', marginBottom: 16 }}>
+        <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)', pointerEvents: 'none' }} />
+        <input
+          className="inp"
+          style={{ paddingLeft: 36, fontSize: 14 }}
+          placeholder="Search subscriptions…"
+          value={filters.search}
+          onChange={(e) => setFilter('search', e.target.value)}
+        />
+        {filters.search && (
+          <button
+            onClick={() => setFilter('search', '')}
+            style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', padding: 4 }}
+          >
+            <X size={14} />
+          </button>
         )}
-        <KPICard label="Total Subs" value={`${metrics.count}`} />
       </div>
 
-      {/* ── Frequency summary cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
-        {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map((freq) => {
-          const list = activeSubs.filter((s) => s.frequency === freq)
-          const total = list.reduce((s, sub) => s + Number(sub.amount || 0), 0)
-          const active = filters.freq === freq
-          return (
-            <div
-              key={freq}
-              className="card"
-              onClick={() => setFilter('freq', active ? 'All' : freq)}
-              style={{
-                cursor: 'pointer',
-                borderColor: active ? 'var(--green-border)' : 'var(--border)',
-                background: active ? 'var(--green-dim)' : 'var(--surface)',
-                transition: 'all 0.15s',
-                padding: '14px 16px',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', marginBottom: 4 }}>{freq}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: active ? 'var(--green)' : 'var(--text)' }}>{fmt(total)}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{list.length} sub{list.length !== 1 ? 's' : ''}</div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* ── Quick filter chips ── */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Quick:</span>
-        {QUICK_FILTERS.map(({ label, key, value }) => {
-          const isActive = filters[key] === value
-          return (
-            <button
-              key={label}
-              onClick={() => setFilter(key, isActive ? 'All' : value)}
-              style={{
-                padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: isActive ? 600 : 400,
-                border: '1px solid', cursor: 'pointer',
-                background: isActive ? 'var(--green-dim)' : 'transparent',
-                borderColor: isActive ? 'var(--green-border)' : 'var(--border)',
-                color: isActive ? 'var(--green)' : 'var(--text-muted)',
-                transition: 'all 0.15s',
-              }}
-            >
-              {label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* ── Filter bar ── */}
-      <div className="card" style={{ padding: '12px 14px', marginBottom: 14 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Search */}
-          <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 160 }}>
-            <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)', pointerEvents: 'none' }} />
-            <input
-              className="inp"
-              style={{ paddingLeft: 30, fontSize: 13, padding: '7px 10px 7px 30px' }}
-              placeholder="Search name, category, payment…"
-              value={filters.search}
-              onChange={(e) => setFilter('search', e.target.value)}
-            />
+      {/* ── 3. 4 Core KPI Cards (2×2) ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 16 }}>
+        {/* Monthly Equivalent */}
+        <KPICard
+          label="Monthly Equivalent"
+          value={fmtK(metrics.monthly)}
+          sub={`${metrics.count} subscription${metrics.count !== 1 ? 's' : ''}`}
+        />
+        {/* Annual Cost */}
+        <KPICard
+          label="Annual Cost"
+          value={fmtK(metrics.annual)}
+          color="var(--red)"
+          icon={<DollarSign size={16} />}
+        />
+        {/* Due in 30 Days */}
+        <KPICard
+          label="Due in 30 Days"
+          value={`${metrics.dueNext30}`}
+          color={metrics.dueNext30 > 0 ? 'var(--amber)' : undefined}
+          sub={metrics.dueNext30 > 0 ? 'renewals coming up' : 'none upcoming'}
+        />
+        {/* Next Renewal — custom card for richer detail */}
+        <div className="card" style={{ minHeight: 0 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: 8 }}>
+            Next Renewal
           </div>
-
-          <select className="inp" style={{ flex: '0 1 150px', fontSize: 13, padding: '7px 10px' }} value={filters.category} onChange={(e) => setFilter('category', e.target.value)}>
-            <option value="All">Category</option>
-            {SUBSCRIPTION_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-          </select>
-
-          <select className="inp" style={{ flex: '0 1 130px', fontSize: 13, padding: '7px 10px' }} value={filters.freq} onChange={(e) => setFilter('freq', e.target.value)}>
-            <option value="All">Frequency</option>
-            {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map((f) => <option key={f}>{f}</option>)}
-          </select>
-
-          <select className="inp" style={{ flex: '0 1 160px', fontSize: 13, padding: '7px 10px' }} value={filters.payment} onChange={(e) => setFilter('payment', e.target.value)}>
-            <option value="All">Payment Method</option>
-            {paymentMethods.map((m) => <option key={m}>{m}</option>)}
-          </select>
-
-          <select className="inp" style={{ flex: '0 1 110px', fontSize: 13, padding: '7px 10px' }} value={filters.owner} onChange={(e) => setFilter('owner', e.target.value)}>
-            <option value="All">Owner</option>
-            <option>Jorge</option>
-            <option>Anseli</option>
-          </select>
-
-          <select className="inp" style={{ flex: '0 1 140px', fontSize: 13, padding: '7px 10px' }} value={filters.renewal} onChange={(e) => setFilter('renewal', e.target.value)}>
-            <option value="All">Renewal</option>
-            {RENEWAL_OPTIONS.map((r) => <option key={r}>{r}</option>)}
-          </select>
-
-          <select className="inp" style={{ flex: '0 1 130px', fontSize: 13, padding: '7px 10px' }} value={filters.price} onChange={(e) => setFilter('price', e.target.value)}>
-            <option value="All">Price Range</option>
-            {PRICE_RANGES.map((r) => <option key={r.label}>{r.label}</option>)}
-          </select>
-
-          {isFiltersActive(filters) && (
-            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ gap: 4, whiteSpace: 'nowrap' }}>
-              <X size={12} /> Clear Filters
-            </button>
+          {nr ? (
+            <>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.4px', lineHeight: 1.2, marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                {nr.name}
+              </div>
+              <div style={{ fontSize: 12, color: nr.days === 0 ? 'var(--amber)' : 'var(--text-muted)', lineHeight: 1.5 }}>
+                {nr.days === 0 ? 'Today' : `In ${nr.days} day${nr.days !== 1 ? 's' : ''}`} · {fmt(nr.amount)}
+              </div>
+              {nr.paymentMethod && (
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{nr.paymentMethod}</div>
+              )}
+            </>
+          ) : (
+            <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>—</div>
           )}
         </div>
       </div>
 
-      {/* ── Group By + result count ── */}
+      {/* ── 4. Sticky Quick Filter Chips ── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 20,
+        background: 'var(--bg)', paddingTop: 8, paddingBottom: 8,
+        marginBottom: 4,
+        borderBottom: '1px solid var(--border)',
+      }}>
+        <div className="chips-scroll" style={{ display: 'flex', gap: 6 }}>
+          {/* All — clears all filters */}
+          <button
+            onClick={clearFilters}
+            style={{
+              ...CHIP.base,
+              ...(!isFiltersActive(filters) ? CHIP.active : CHIP.inactive),
+            }}
+          >
+            All
+          </button>
+
+          {/* Quick filter chips */}
+          {QUICK_FILTERS.map(({ label, key, value }) => {
+            const isActive = filters[key] === value
+            return (
+              <button
+                key={label}
+                onClick={() => setFilter(key, isActive ? 'All' : value)}
+                style={{ ...CHIP.base, ...(isActive ? CHIP.active : CHIP.inactive) }}
+              >
+                {label}
+              </button>
+            )
+          })}
+
+          {/* Dynamic payment method chips */}
+          {paymentMethods.map((m) => {
+            const isActive = filters.payment === m
+            return (
+              <button
+                key={m}
+                onClick={() => setFilter('payment', isActive ? 'All' : m)}
+                style={{ ...CHIP.base, ...(isActive ? CHIP.active : CHIP.inactive) }}
+              >
+                {m}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── 5. Spending by Billing Frequency (collapsible, default collapsed) ── */}
+      <div style={{ marginTop: 12, marginBottom: 12 }}>
+        <button
+          onClick={() => setShowFrequency(!showFrequency)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+            background: 'none', border: '1px solid var(--border)', borderRadius: 10,
+            padding: '9px 14px', cursor: 'pointer', color: 'var(--text-muted)',
+            fontSize: 13, fontWeight: 500, transition: 'border-color 0.15s',
+          }}
+        >
+          {showFrequency ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span>Spending by Billing Frequency</span>
+          <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-dim)' }}>
+            {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map(f =>
+              activeSubs.filter(s => s.frequency === f).length
+            ).join(' · ')} subs
+          </span>
+        </button>
+
+        {showFrequency && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 10 }}>
+            {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map((freq) => {
+              const list = activeSubs.filter((s) => s.frequency === freq)
+              const total = list.reduce((s, sub) => s + Number(sub.amount || 0), 0)
+              const isActive = filters.freq === freq
+              return (
+                <div
+                  key={freq}
+                  className="card"
+                  onClick={() => setFilter('freq', isActive ? 'All' : freq)}
+                  style={{
+                    cursor: 'pointer',
+                    borderColor: isActive ? 'var(--green-border)' : 'var(--border)',
+                    background: isActive ? 'var(--green-dim)' : 'var(--surface)',
+                    transition: 'all 0.15s',
+                    padding: '14px 16px',
+                  }}
+                >
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', marginBottom: 4 }}>{freq}</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: isActive ? 'var(--green)' : 'var(--text)' }}>{fmtK(total)}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{list.length} sub{list.length !== 1 ? 's' : ''}</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── 6. Advanced Filters (collapsible dropdown row) ── */}
+      <div style={{ marginBottom: 14 }}>
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'none', border: '1px solid var(--border)', borderRadius: 10,
+            padding: '9px 14px', cursor: 'pointer',
+            color: advancedFilterCount > 0 ? 'var(--green)' : 'var(--text-muted)',
+            borderColor: advancedFilterCount > 0 ? 'var(--green-border)' : 'var(--border)',
+            fontSize: 13, fontWeight: advancedFilterCount > 0 ? 600 : 400,
+            transition: 'all 0.15s',
+          }}
+        >
+          <SlidersHorizontal size={13} />
+          <span>More Filters</span>
+          {advancedFilterCount > 0 && (
+            <span style={{
+              background: 'var(--green)', color: '#0a0a0a',
+              borderRadius: 99, fontSize: 10, fontWeight: 700,
+              padding: '1px 6px', marginLeft: 2,
+            }}>
+              {advancedFilterCount}
+            </span>
+          )}
+          {showAdvanced ? <ChevronDown size={13} style={{ marginLeft: 'auto' }} /> : <ChevronRight size={13} style={{ marginLeft: 'auto' }} />}
+        </button>
+
+        {showAdvanced && (
+          <div className="card" style={{ padding: '12px 14px', marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <select className="inp" style={{ flex: '0 1 150px', fontSize: 13, padding: '7px 10px' }} value={filters.category} onChange={(e) => setFilter('category', e.target.value)}>
+                <option value="All">Category</option>
+                {SUBSCRIPTION_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+
+              <select className="inp" style={{ flex: '0 1 130px', fontSize: 13, padding: '7px 10px' }} value={filters.freq} onChange={(e) => setFilter('freq', e.target.value)}>
+                <option value="All">Frequency</option>
+                {['Monthly', 'Quarterly', '6 Months', 'Yearly'].map((f) => <option key={f}>{f}</option>)}
+              </select>
+
+              <select className="inp" style={{ flex: '0 1 110px', fontSize: 13, padding: '7px 10px' }} value={filters.owner} onChange={(e) => setFilter('owner', e.target.value)}>
+                <option value="All">Owner</option>
+                <option>Jorge</option>
+                <option>Anseli</option>
+              </select>
+
+              <select className="inp" style={{ flex: '0 1 140px', fontSize: 13, padding: '7px 10px' }} value={filters.renewal} onChange={(e) => setFilter('renewal', e.target.value)}>
+                <option value="All">Renewal</option>
+                {RENEWAL_OPTIONS.map((r) => <option key={r}>{r}</option>)}
+              </select>
+
+              <select className="inp" style={{ flex: '0 1 130px', fontSize: 13, padding: '7px 10px' }} value={filters.price} onChange={(e) => setFilter('price', e.target.value)}>
+                <option value="All">Price Range</option>
+                {PRICE_RANGES.map((r) => <option key={r.label}>{r.label}</option>)}
+              </select>
+
+              {isFiltersActive(filters) && (
+                <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ gap: 4 }}>
+                  <X size={12} /> Clear All
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 7. Group By + result count ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Group by:</span>
         {GROUP_BY_OPTIONS.map((opt) => (
@@ -452,7 +588,7 @@ export default function Subscriptions() {
         </span>
       </div>
 
-      {/* ── Table ── */}
+      {/* ── 8. Subscription Table ── */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table className="tbl">
@@ -477,7 +613,7 @@ export default function Subscriptions() {
                             <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>{groupName}</span>
                             <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>({subs.length})</span>
                             <span style={{ marginLeft: 'auto', display: 'flex', gap: 16 }}>
-                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmt(groupAnnual)}/yr</span>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmtK(groupAnnual)}/yr</span>
                               <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600 }}>{fmt(groupMonthly)}/mo</span>
                             </span>
                           </div>
@@ -505,6 +641,32 @@ export default function Subscriptions() {
           )}
         </div>
       </div>
+
+      {/* ── 9. Floating Action Button ── */}
+      <button
+        onClick={() => { setForm(defaultForm()); setShowAdd(true) }}
+        title="Add Subscription"
+        style={{
+          position: 'fixed', bottom: 80, right: 20,
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'var(--green)', color: '#0a0a0a',
+          border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(52,211,153,0.45)',
+          zIndex: 50,
+          transition: 'transform 0.15s, box-shadow 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.08)'
+          e.currentTarget.style.boxShadow = '0 6px 28px rgba(52,211,153,0.6)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)'
+          e.currentTarget.style.boxShadow = '0 4px 20px rgba(52,211,153,0.45)'
+        }}
+      >
+        <Plus size={26} />
+      </button>
 
       {/* ── Add / Edit Modal ── */}
       <Modal

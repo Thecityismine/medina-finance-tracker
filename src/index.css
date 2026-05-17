@@ -184,3 +184,11 @@ input[type="checkbox"] {
   background: var(--border);
   margin: 16px 0;
 }
+
+/* Horizontal chip scroll row — hides scrollbar cross-browser */
+.chips-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chips-scroll::-webkit-scrollbar { display: none; }
