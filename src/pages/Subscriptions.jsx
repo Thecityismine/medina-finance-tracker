@@ -179,7 +179,14 @@ export default function Subscriptions() {
       return diff >= 0 && diff <= 30
     }).length
     const nextRenewal = filtered
-      .map((s) => ({ ...s, days: daysUntilDue(s.dueDate) }))
+      .map((s) => {
+        if (s.nextBillingDate) {
+          const days = Math.ceil((new Date(s.nextBillingDate) - now) / 86400000)
+          return { ...s, days }
+        }
+        if (s.frequency === 'Monthly') return { ...s, days: daysUntilDue(s.dueDate) }
+        return { ...s, days: -1 }
+      })
       .filter((s) => s.days >= 0)
       .sort((a, b) => a.days - b.days)[0]
     return { annual, monthly, dueNext30, nextRenewal, count: filtered.length }
