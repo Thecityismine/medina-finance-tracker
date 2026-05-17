@@ -145,7 +145,7 @@ function CategoryBadge({ category }) {
 }
 
 function defaultForm() {
-  return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', category: '', nextBillingDate: '', paymentMethod: '', payPeriod: '', contractAddress: '' }
+  return { name: '', amount: '', dueDate: '', frequency: 'Monthly', owner: 'Jorge', category: '', nextBillingDate: '', paymentMethod: '', payPeriod: '', contractAddress: '', purchaseDate: '', notes: '' }
 }
 
 const CHIP = {
@@ -281,6 +281,8 @@ export default function Subscriptions() {
       paymentMethod: sub.paymentMethod ?? '',
       payPeriod: sub.payPeriod ?? '',
       contractAddress: sub.contractAddress ?? '',
+      purchaseDate: sub.purchaseDate ?? '',
+      notes: sub.notes ?? '',
     })
   }
 
@@ -293,6 +295,8 @@ export default function Subscriptions() {
       paymentMethod: form.paymentMethod || '',
       payPeriod: form.payPeriod ? Number(form.payPeriod) : null,
       contractAddress: form.contractAddress || '',
+      purchaseDate: form.purchaseDate || '',
+      notes: form.notes || '',
     }
     try {
       if (editSub) { await updateSubscription(editSub.id, data); setEditSub(null) }
@@ -762,12 +766,25 @@ export default function Subscriptions() {
               <option value="2">Period 2 · 15th – 31st</option>
             </select>
           </FormRow>
+          <FormRow label="Purchase Date">
+            <input className="inp" type="date" value={form.purchaseDate || ''} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })} />
+          </FormRow>
         </div>
         <FormRow label="Payment Method">
           <input className="inp" value={form.paymentMethod || ''} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} placeholder="e.g. BOA Visa, AMEX, BOA Checking" />
         </FormRow>
         <FormRow label="Contract Address">
           <input className="inp" value={form.contractAddress || ''} onChange={(e) => setForm({ ...form, contractAddress: e.target.value })} placeholder="0x… or contract identifier" style={{ fontFamily: 'monospace', fontSize: 13 }} />
+        </FormRow>
+        <FormRow label="Notes">
+          <textarea
+            className="inp"
+            value={form.notes || ''}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            placeholder="Any additional details…"
+            rows={3}
+            style={{ resize: 'vertical', lineHeight: 1.5 }}
+          />
         </FormRow>
         <ModalFooter>
           <button className="btn btn-ghost" onClick={() => { setShowAdd(false); setEditSub(null) }}>Cancel</button>
